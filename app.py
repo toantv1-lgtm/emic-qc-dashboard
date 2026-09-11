@@ -1,5 +1,6 @@
 from datetime import date, datetime
 import os
+import re
 import sqlite3
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
@@ -7,8 +8,70 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="EMIC QC Dashboard", page_icon="📊", layout="wide")
+# ================= CẤU HÌNH TRANG WEB & THEME CSS =================
+st.set_page_config(
+    page_title="EMIC QC Dashboard",
+    page_icon="📊",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
+# Tối ưu CSS để giao diện phẳng, đẹp, nền mờ và căn chỉnh thẻ chuẩn UI
+st.markdown(
+    """
+    <style>
+        .stApp {
+            background-color: #F8FAFC;
+        }
+        /* Style Sidebar */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #E2E8F0;
+        }
+        /* Style Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            gap: 8px;
+            background-color: transparent;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #FFFFFF;
+            border-radius: 8px;
+            padding: 8px 18px;
+            border: 1px solid #E2E8F0;
+            font-weight: 600;
+            color: #475569;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #3B82F6 !important;
+            color: #FFFFFF !important;
+            border-color: #3B82F6 !important;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
+        }
+        /* Style Containers/Cards */
+        div[data-testid="stVerticalBlock"] > div[style*="flex"] {
+            background-color: #FFFFFF;
+            border-radius: 10px;
+            padding: 10px;
+            border: 1px solid #E2E8F0;
+        }
+        /* Custom Title Banner */
+        .header-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 5px;
+        }
+        .sub-title {
+            font-size: 13px;
+            color: #64748B;
+            margin-bottom: 15px;
+        }
+    </style>
+""",
+    unsafe_allow_html=True,
+)
+
+# Cấu hình Matplotlib Sắc Nét HD
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.size"] = 8.5
 plt.rcParams["axes.unicode_minus"] = False
@@ -40,6 +103,11 @@ class Theme:
   DANGER = "#EF4444"
   PURPLE = "#A855F7"
   TEXT_PRIMARY = "#0F172A"
+
+
+def clean_emoji(text):
+  """Khử Emoji trong tiêu đề để tránh lỗi ô vuông [?] trên Matplotlib."""
+  return re.sub(r"[^\w\s\(\)\-\/\.\,\:]", "", str(text)).strip()
 
 
 def log_formatter(x, pos):
@@ -79,20 +147,38 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# --- THANH LỌC BÊN TRÁI ---
-st.sidebar.title("🔍 Lọc Dữ Liệu Báo Cáo")
+# ================= SIDEBAR LỌC DỮ LIỆU =================
+st.sidebar.title("🎛️ BỘ LỌC DỮ LIỆU")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
   tu_date = st.date_input("Từ ngày", date(datetime.now().year, 1, 1))
 with col_den:
   den_date = st.date_input("Đến ngày", date.today())
 
-if st.sidebar.button("🔄 Làm mới dữ liệu"):
+st.sidebar.markdown("---")
+if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", use_container_width=True):
   st.cache_data.clear()
+  st.rerun()
+
+st.sidebar.info(
+    "📌 Dữ liệu được đồng bộ tự động từ SAP Database. Đảm bảo file"
+    " `Report_Database.db` đã được cập nhật."
+)
 
 df_qa32, df_coois = load_data(tu_date, den_date)
 
-st.title("📊 EMIC QC - HỆ THỐNG BÁO CÁO DỮ LIỆU TỰ ĐỘNG CHUYÊN SÂU")
+# ================= HEADER TRANG =================
+st.markdown(
+    '<div class="header-title">📊 EMIC QC - HỆ THỐNG BÁO CÁO DỮ LIỆU TỰ ĐỘNG'
+    " CHUYÊN SÂU</div>",
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="sub-title">Hệ thống phân tích tiến độ sản xuất, kiểm soát vật'
+    f" tư và tỷ lệ hoàn thành từ {tu_date.strftime('%d/%m/%Y')} đến"
+    f" {den_date.strftime('%d/%m/%Y')}</div>",
+    unsafe_allow_html=True,
+)
 
 tab_vt, tab_ck, tab_tuti, tab_ct = st.tabs([
     "📋 Báo Cáo Vật Tư",
@@ -101,7 +187,7 @@ tab_vt, tab_ck, tab_tuti, tab_ct = st.tabs([
     "⚡ Báo Cáo Công Tơ",
 ])
 
-# ================= TAB 1: VẬT TƯ =================
+# ================= TAB 1: BÁO CÁO VẬT TƯ =================
 with tab_vt:
   if df_qa32.empty:
     st.info("💡 Chưa có dữ liệu QA32 trong khoảng thời gian đã chọn.")
@@ -226,9 +312,12 @@ with tab_vt:
         top_block_dict[key]["ca_block"] += ca_val
         top_block_dict[key]["ft_total"] += ft_val
 
-    col1, col2 = st.columns([2.5, 1])
+    col1, col2 = st.columns([2.3, 1.2])
+
     with col1:
-      fig1, ax1 = plt.subplots(figsize=(10, 4.2), dpi=100)
+      fig1, ax1 = plt.subplots(figsize=(8, 3.8), dpi=200)
+      fig1.patch.set_facecolor(Theme.SURFACE)
+      ax1.set_facecolor(Theme.SURFACE)
       ax2 = ax1.twinx()
       x, w = np.arange(12), 0.38
 
@@ -256,19 +345,19 @@ with tab_vt:
       max_order_val = max(
           [ud01_m[i] + ud02_m[i] + ud03_m[i] for i in range(12)] + [1]
       )
-      ax1.set_ylim(0, max_order_val * 1.25)
+      ax1.set_ylim(0, max_order_val * 1.3)
 
       for i in range(12):
         un_cnt = uninspected_m[i]
         if un_cnt > 0:
           ax1.text(
               x[i],
-              (ud01_m[i] + ud02_m[i] + ud03_m[i]) + (max_order_val * 0.02),
+              (ud01_m[i] + ud02_m[i] + ud03_m[i]) + (max_order_val * 0.03),
               f"{un_cnt}",
               ha="center",
               va="bottom",
               fontweight="bold",
-              fontsize=8.5,
+              fontsize=7.5,
               color=Theme.PURPLE,
           )
 
@@ -280,7 +369,7 @@ with tab_vt:
           ft_qty_m,
           color=Theme.PRIMARY,
           marker="o",
-          linewidth=2,
+          linewidth=1.8,
           label="Tổng số hàng về (FT)",
       )
       line_by = ax2.plot(
@@ -288,26 +377,36 @@ with tab_vt:
           total_by_sample_m,
           color=Theme.PURPLE,
           marker="s",
-          linewidth=2,
+          linewidth=1.8,
           linestyle="--",
           label="Số mẫu phải kiểm (BY)",
       )
 
       ax2.set_yscale("symlog", linthresh=100)
       ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+      max_ft = max(ft_qty_m + total_by_sample_m + [100])
+      ax2.set_ylim(0, max_ft * 3.5)
+
       ax1.set_xticks(x)
-      ax1.set_xticklabels(months_labels, fontweight="bold")
+      ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
       ax1.set_ylabel(
-          "← Số Lượng Lệnh (Trục Trái)", fontweight="bold", color=Theme.SUCCESS
+          "← Số Lượng Lệnh (Trục Trái)",
+          fontweight="bold",
+          color=Theme.SUCCESS,
+          fontsize=8,
       )
       ax2.set_ylabel(
-          "Số Lượng Vật Tư / Mẫu [Log] (Trục Phải) →",
+          "Số Lượng Vật Tư / Mẫu [Log] →",
           fontweight="bold",
           color=Theme.PRIMARY,
+          fontsize=8,
       )
       ax1.set_title(
           "BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
           fontweight="bold",
+          fontsize=9.5,
+          pad=10,
       )
 
       all_handles = [b_ud01, b_ud02, b_ud03, line_ft[0], line_by[0]]
@@ -322,14 +421,19 @@ with tab_vt:
           all_handles,
           all_labels,
           loc="upper center",
-          bbox_to_anchor=(0.5, -0.18),
+          bbox_to_anchor=(0.5, -0.16),
           frameon=False,
           ncol=3,
+          fontsize=7.5,
       )
-      st.pyplot(fig1)
+
+      st.pyplot(fig1, use_container_width=True)
 
     with col2:
-      fig_pie, ax_pie = plt.subplots(figsize=(4, 4.2), dpi=100)
+      fig_pie, ax_pie = plt.subplots(figsize=(4, 3.8), dpi=200)
+      fig_pie.patch.set_facecolor(Theme.SURFACE)
+      ax_pie.set_facecolor(Theme.SURFACE)
+
       ok_cnt = max(0.0, total_ft_all - total_ca_block)
       if total_ft_all > 0:
         wedges, texts, autotexts = ax_pie.pie(
@@ -341,13 +445,21 @@ with tab_vt:
             colors=[Theme.SUCCESS, Theme.DANGER],
             autopct="%1.1f%%",
             startangle=140,
-            wedgeprops=dict(width=0.45, edgecolor="white"),
+            pctdistance=0.6,
+            labeldistance=1.15,
+            wedgeprops=dict(width=0.42, edgecolor="white"),
         )
         texts[0].set_color(Theme.SUCCESS)
         texts[0].set_fontweight("bold")
+        texts[0].set_fontsize(8)
         if len(texts) > 1:
           texts[1].set_color(Theme.DANGER)
           texts[1].set_fontweight("bold")
+          texts[1].set_fontsize(8)
+        for at in autotexts:
+          at.set_fontweight("bold")
+          at.set_fontsize(7.5)
+
         ax_pie.text(
             0,
             0,
@@ -355,14 +467,17 @@ with tab_vt:
             ha="center",
             va="center",
             fontweight="bold",
+            fontsize=8.5,
         )
       else:
         ax_pie.text(0, 0, "Chưa có dữ liệu", ha="center")
-      ax_pie.set_title(
-          "TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI", fontweight="bold"
-      )
-      st.pyplot(fig_pie)
 
+      ax_pie.set_title(
+          "TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI", fontweight="bold", fontsize=9.5, pad=10
+      )
+      st.pyplot(fig_pie, use_container_width=True)
+
+    st.markdown("---")
     st.subheader("🏆 DANH SÁCH VẬT TƯ BỊ BLOCK & UD02, UD03")
     sorted_blocks = sorted(
         top_block_dict.values(),
@@ -392,7 +507,7 @@ with tab_vt:
       ]
       st.dataframe(df_block, use_container_width=True, hide_index=True)
     else:
-      st.success("Không có vật tư nào bị Block hoặc UD 02, 03")
+      st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03 trong kỳ báo cáo.")
 
 
 # ================= HÀM CHUNG CHO CÁC TAB COOIS =================
@@ -435,9 +550,15 @@ def render_coois_section(phan_he_code, title_text):
     if sl_h < sl_t:
       m_uncomp_orders[m_idx] += 1
 
-  col1, col2 = st.columns([2.5, 1])
+  clean_title_matplotlib = clean_emoji(title_text)
+
+  # HÀNG 1: BIỂU ĐỒ TIẾN ĐỘ + DONUT CHART
+  col1, col2 = st.columns([2.3, 1.2])
+
   with col1:
-    fig1, ax1 = plt.subplots(figsize=(8, 3.5), dpi=100)
+    fig1, ax1 = plt.subplots(figsize=(8, 3.8), dpi=200)
+    fig1.patch.set_facecolor(Theme.SURFACE)
+    ax1.set_facecolor(Theme.SURFACE)
     ax2 = ax1.twinx()
     x, w = np.arange(12), 0.35
 
@@ -477,13 +598,16 @@ def render_coois_section(phan_he_code, title_text):
     ax2.set_yscale("symlog", linthresh=100)
     ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
 
+    max_q = max([m_comp_qty[i] + m_uncomp_qty[i] for i in range(12)] + [1])
+    ax2.set_ylim(0, max_q * 3.5)
+
     for i in range(12):
       t_qty = m_comp_qty[i] + m_uncomp_qty[i]
       if t_qty > 0:
         pct = (m_comp_qty[i] / t_qty) * 100
         ax2.text(
             x[i] + w / 2,
-            t_qty * 1.05,
+            t_qty * 1.15,
             f"{pct:.0f}%",
             ha="center",
             va="bottom",
@@ -493,12 +617,22 @@ def render_coois_section(phan_he_code, title_text):
         )
 
     ax1.set_title(
-        f"TIẾN ĐỘ SẢN XUẤT - {title_text}", fontweight="bold", fontsize=10
+        f"TIẾN ĐỘ SẢN XUẤT - {clean_title_matplotlib}",
+        fontweight="bold",
+        fontsize=9.5,
+        pad=10,
     )
-    ax1.set_ylabel("← Tổng Lệnh", fontweight="bold", color=Theme.PRIMARY)
-    ax2.set_ylabel("Số Lượng Giao [Log] →", fontweight="bold", color=Theme.SUCCESS)
+    ax1.set_ylabel(
+        "← Tổng Lệnh", fontweight="bold", color=Theme.PRIMARY, fontsize=8
+    )
+    ax2.set_ylabel(
+        "Số Lượng Giao [Log] →",
+        fontweight="bold",
+        color=Theme.SUCCESS,
+        fontsize=8,
+    )
     ax1.set_xticks(x)
-    ax1.set_xticklabels(months_labels, fontweight="bold")
+    ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
 
     lines1, labels1 = ax1.get_legend_handles_labels()
     lines2, labels2 = ax2.get_legend_handles_labels()
@@ -506,14 +640,19 @@ def render_coois_section(phan_he_code, title_text):
         lines1 + lines2,
         labels1 + labels2,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.18),
+        bbox_to_anchor=(0.5, -0.16),
         frameon=False,
         ncol=4,
+        fontsize=7.5,
     )
-    st.pyplot(fig1)
+
+    st.pyplot(fig1, use_container_width=True)
 
   with col2:
-    fig2, ax3 = plt.subplots(figsize=(4, 3.5), dpi=100)
+    fig2, ax3 = plt.subplots(figsize=(4, 3.8), dpi=200)
+    fig2.patch.set_facecolor(Theme.SURFACE)
+    ax3.set_facecolor(Theme.SURFACE)
+
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
     if tot_qty_all > 0:
       pct_deliv = (deliv_qty_all / tot_qty_all) * 100
@@ -526,13 +665,18 @@ def render_coois_section(phan_he_code, title_text):
           ],
           colors=[Theme.SUCCESS, Theme.WARNING],
           startangle=140,
+          pctdistance=0.6,
+          labeldistance=1.15,
           wedgeprops=dict(width=0.42, edgecolor="white"),
       )
       texts[0].set_color(Theme.SUCCESS)
       texts[0].set_fontweight("bold")
+      texts[0].set_fontsize(8)
       if len(texts) > 1:
         texts[1].set_color(Theme.DANGER)
         texts[1].set_fontweight("bold")
+        texts[1].set_fontsize(8)
+
       ax3.text(
           0,
           0,
@@ -540,11 +684,18 @@ def render_coois_section(phan_he_code, title_text):
           ha="center",
           va="center",
           fontweight="bold",
+          fontsize=8.5,
       )
     else:
       ax3.text(0, 0, "Chưa có dữ liệu", ha="center")
-    ax3.set_title("TỶ LỆ HOÀN THÀNH TỔNG QUAN", fontweight="bold", fontsize=10)
-    st.pyplot(fig2)
+
+    ax3.set_title(
+        "TỶ LỆ HOÀN THÀNH TỔNG QUAN", fontweight="bold", fontsize=9.5, pad=10
+    )
+    st.pyplot(fig2, use_container_width=True)
+
+  # HÀNG 2: BỘ LỌC DÒNG SP VÀ 2 BIỂU ĐỒ BÊN DƯỚI
+  st.markdown("---")
 
   sub_5 = df_sub[
       df_sub["ma_tp"]
@@ -567,12 +718,15 @@ def render_coois_section(phan_he_code, title_text):
   )
   available_fams = ["Tất cả dòng sản phẩm"] + sorted(list(set(raw_fams)))
 
-  col3, col4 = st.columns(2)
-  with col3:
+  col_sel, _ = st.columns([1, 2])
+  with col_sel:
     sel_fam = st.selectbox(
         "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
     )
 
+  col3, col4 = st.columns(2)
+
+  with col3:
     m3_qty = [0.0] * 12
     if not sub_5.empty:
       sub_5["month"] = pd.to_datetime(
@@ -588,17 +742,23 @@ def render_coois_section(phan_he_code, title_text):
         if pd.notna(m_val) and 1 <= int(m_val) <= 12:
           m3_qty[int(m_val) - 1] += float(r["sl_ht"])
 
-    fig3, ax_b3 = plt.subplots(figsize=(6, 3), dpi=100)
+    fig3, ax_b3 = plt.subplots(figsize=(6, 3.2), dpi=200)
+    fig3.patch.set_facecolor(Theme.SURFACE)
+    ax_b3.set_facecolor(Theme.SURFACE)
+
     ax_b3.bar(x, m3_qty, width=0.42, color=Theme.PRIMARY)
     ax_b3.set_yscale("symlog", linthresh=100)
     ax_b3.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_val_b3 = max(m3_qty + [1])
+    ax_b3.set_ylim(0, max_val_b3 * 3.5)
 
     for i in range(12):
       v = m3_qty[i]
       if v > 0:
         ax_b3.text(
             x[i],
-            v * 1.25 if v > 10 else v + 2,
+            v * 1.2,
             f"{int(v):,}",
             ha="center",
             va="bottom",
@@ -608,15 +768,23 @@ def render_coois_section(phan_he_code, title_text):
         )
 
     ax_b3.set_xticks(x)
-    ax_b3.set_xticklabels(months_labels, fontweight="bold")
-    ax_b3.set_ylabel("SL Hoàn Thành [Log]", fontweight="bold", color=Theme.PRIMARY)
-    ax_b3.set_title(
-        f"SẢN LƯỢNG - DÒNG: {sel_fam}", fontweight="bold", fontsize=10
+    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+    ax_b3.set_ylabel(
+        "SL Hoàn Thành [Log]", fontweight="bold", color=Theme.PRIMARY, fontsize=8
     )
-    st.pyplot(fig3)
+    ax_b3.set_title(
+        f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
+        fontweight="bold",
+        fontsize=9,
+        pad=10,
+    )
+    st.pyplot(fig3, use_container_width=True)
 
   with col4:
-    fig4, ax_b4 = plt.subplots(figsize=(6, 3), dpi=100)
+    fig4, ax_b4 = plt.subplots(figsize=(6, 3.2), dpi=200)
+    fig4.patch.set_facecolor(Theme.SURFACE)
+    ax_b4.set_facecolor(Theme.SURFACE)
+
     if not sub_5.empty:
       summary_fams = (
           sub_5.groupby("mat_prefix")[["sl_ht"]].sum().reset_index()
@@ -646,12 +814,15 @@ def render_coois_section(phan_he_code, title_text):
     ax_b4.set_yscale("symlog", linthresh=100)
     ax_b4.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
 
+    max_val_b4 = max(list(deliv_fams) + [1])
+    ax_b4.set_ylim(0, max_val_b4 * 3.5)
+
     for i in range(len(fams_x)):
       v = deliv_fams[i]
       if v > 0:
         ax_b4.text(
             x_b4[i],
-            v * 1.25 if v > 10 else v + 2,
+            v * 1.2,
             f"{int(v):,}",
             ha="center",
             va="bottom",
@@ -661,12 +832,17 @@ def render_coois_section(phan_he_code, title_text):
         )
 
     ax_b4.set_xticks(x_b4)
-    ax_b4.set_xticklabels(fams_x, fontweight="bold")
-    ax_b4.set_ylabel("Số Lượng SP [Log]", fontweight="bold", color=Theme.SUCCESS)
-    ax_b4.set_title(
-        "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5", fontweight="bold", fontsize=10
+    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=8)
+    ax_b4.set_ylabel(
+        "Số Lượng SP [Log]", fontweight="bold", color=Theme.SUCCESS, fontsize=8
     )
-    st.pyplot(fig4)
+    ax_b4.set_title(
+        "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
+        fontweight="bold",
+        fontsize=9,
+        pad=10,
+    )
+    st.pyplot(fig4, use_container_width=True)
 
 
 with tab_ck:
