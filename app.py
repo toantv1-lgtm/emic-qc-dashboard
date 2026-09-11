@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# ================= CẤU HÌNH TRANG WEB & THEME CSS =================
+# ================= 1. CẤU HÌNH TRÀN MÀN HÌNH 100% & THEME CSS =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -16,12 +16,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Tối ưu CSS để giao diện phẳng, đẹp, nền mờ và căn chỉnh thẻ chuẩn UI
 st.markdown(
     """
     <style>
         .stApp {
             background-color: #F8FAFC;
+        }
+        /* Bỏ giới hạn max-width mặc định, ép tràn 100% màn hình */
+        .main .block-container {
+            max-width: 100% !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
         }
         /* Style Sidebar */
         section[data-testid="stSidebar"] {
@@ -47,31 +54,29 @@ st.markdown(
             border-color: #3B82F6 !important;
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25);
         }
-        /* Style Containers/Cards */
-        div[data-testid="stVerticalBlock"] > div[style*="flex"] {
-            background-color: #FFFFFF;
-            border-radius: 10px;
-            padding: 10px;
-            border: 1px solid #E2E8F0;
+        /* Căn giữa dọc cho các cột để biểu đồ luôn song song hàng ngang */
+        [data-testid="stColumn"] {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
-        /* Custom Title Banner */
         .header-title {
             font-size: 24px;
             font-weight: 800;
             color: #0F172A;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
         }
         .sub-title {
             font-size: 13px;
             color: #64748B;
-            margin-bottom: 15px;
+            margin-bottom: 12px;
         }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Cấu hình Matplotlib Sắc Nét HD
+# Cấu hình Matplotlib Sắc Nét
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.size"] = 8.5
 plt.rcParams["axes.unicode_minus"] = False
@@ -106,7 +111,7 @@ class Theme:
 
 
 def clean_emoji(text):
-  """Khử Emoji trong tiêu đề để tránh lỗi ô vuông [?] trên Matplotlib."""
+  """Lọc Emoji trong tiêu đề để tránh lỗi ô vuông [?] trên Matplotlib."""
   return re.sub(r"[^\w\s\(\)\-\/\.\,\:]", "", str(text)).strip()
 
 
@@ -147,7 +152,7 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= SIDEBAR LỌC DỮ LIỆU =================
+# ================= 2. SIDEBAR LỌC DỮ LIỆU =================
 st.sidebar.title("🎛️ BỘ LỌC DỮ LIỆU")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
@@ -160,14 +165,9 @@ if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", use_container_width=
   st.cache_data.clear()
   st.rerun()
 
-st.sidebar.info(
-    "📌 Dữ liệu được đồng bộ tự động từ SAP Database. Đảm bảo file"
-    " `Report_Database.db` đã được cập nhật."
-)
-
 df_qa32, df_coois = load_data(tu_date, den_date)
 
-# ================= HEADER TRANG =================
+# ================= 3. HEADER BÁO CÁO =================
 st.markdown(
     '<div class="header-title">📊 EMIC QC - HỆ THỐNG BÁO CÁO DỮ LIỆU TỰ ĐỘNG'
     " CHUYÊN SÂU</div>",
@@ -187,7 +187,7 @@ tab_vt, tab_ck, tab_tuti, tab_ct = st.tabs([
     "⚡ Báo Cáo Công Tơ",
 ])
 
-# ================= TAB 1: BÁO CÁO VẬT TƯ =================
+# ================= 4. TAB 1: BÁO CÁO VẬT TƯ =================
 with tab_vt:
   if df_qa32.empty:
     st.info("💡 Chưa có dữ liệu QA32 trong khoảng thời gian đã chọn.")
@@ -312,10 +312,10 @@ with tab_vt:
         top_block_dict[key]["ca_block"] += ca_val
         top_block_dict[key]["ft_total"] += ft_val
 
-    col1, col2 = st.columns([2.3, 1.2])
+    col1, col2 = st.columns([2.6, 1])
 
     with col1:
-      fig1, ax1 = plt.subplots(figsize=(8, 3.8), dpi=200)
+      fig1, ax1 = plt.subplots(figsize=(9.5, 4.0), dpi=200)
       fig1.patch.set_facecolor(Theme.SURFACE)
       ax1.set_facecolor(Theme.SURFACE)
       ax2 = ax1.twinx()
@@ -386,7 +386,7 @@ with tab_vt:
       ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
 
       max_ft = max(ft_qty_m + total_by_sample_m + [100])
-      ax2.set_ylim(0, max_ft * 3.5)
+      ax2.set_ylim(0, max_ft * 3.0)
 
       ax1.set_xticks(x)
       ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
@@ -421,7 +421,7 @@ with tab_vt:
           all_handles,
           all_labels,
           loc="upper center",
-          bbox_to_anchor=(0.5, -0.16),
+          bbox_to_anchor=(0.5, -0.15),
           frameon=False,
           ncol=3,
           fontsize=7.5,
@@ -430,7 +430,7 @@ with tab_vt:
       st.pyplot(fig1, use_container_width=True)
 
     with col2:
-      fig_pie, ax_pie = plt.subplots(figsize=(4, 3.8), dpi=200)
+      fig_pie, ax_pie = plt.subplots(figsize=(3.8, 4.0), dpi=200)
       fig_pie.patch.set_facecolor(Theme.SURFACE)
       ax_pie.set_facecolor(Theme.SURFACE)
 
@@ -447,7 +447,7 @@ with tab_vt:
             startangle=140,
             pctdistance=0.6,
             labeldistance=1.15,
-            wedgeprops=dict(width=0.42, edgecolor="white"),
+            wedgeprops=dict(width=0.45, edgecolor="white"),
         )
         texts[0].set_color(Theme.SUCCESS)
         texts[0].set_fontweight("bold")
@@ -510,7 +510,7 @@ with tab_vt:
       st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03 trong kỳ báo cáo.")
 
 
-# ================= HÀM CHUNG CHO CÁC TAB COOIS =================
+# ================= 5. HÀM XỬ LÝ DỮ LIỆU COOIS =================
 def render_coois_section(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -553,10 +553,10 @@ def render_coois_section(phan_he_code, title_text):
   clean_title_matplotlib = clean_emoji(title_text)
 
   # HÀNG 1: BIỂU ĐỒ TIẾN ĐỘ + DONUT CHART
-  col1, col2 = st.columns([2.3, 1.2])
+  col1, col2 = st.columns([2.6, 1])
 
   with col1:
-    fig1, ax1 = plt.subplots(figsize=(8, 3.8), dpi=200)
+    fig1, ax1 = plt.subplots(figsize=(9.5, 4.0), dpi=200)
     fig1.patch.set_facecolor(Theme.SURFACE)
     ax1.set_facecolor(Theme.SURFACE)
     ax2 = ax1.twinx()
@@ -599,7 +599,7 @@ def render_coois_section(phan_he_code, title_text):
     ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
 
     max_q = max([m_comp_qty[i] + m_uncomp_qty[i] for i in range(12)] + [1])
-    ax2.set_ylim(0, max_q * 3.5)
+    ax2.set_ylim(0, max_q * 3.0)
 
     for i in range(12):
       t_qty = m_comp_qty[i] + m_uncomp_qty[i]
@@ -607,7 +607,7 @@ def render_coois_section(phan_he_code, title_text):
         pct = (m_comp_qty[i] / t_qty) * 100
         ax2.text(
             x[i] + w / 2,
-            t_qty * 1.15,
+            t_qty * 1.1,
             f"{pct:.0f}%",
             ha="center",
             va="bottom",
@@ -619,7 +619,7 @@ def render_coois_section(phan_he_code, title_text):
     ax1.set_title(
         f"TIẾN ĐỘ SẢN XUẤT - {clean_title_matplotlib}",
         fontweight="bold",
-        fontsize=9.5,
+        fontsize=10,
         pad=10,
     )
     ax1.set_ylabel(
@@ -640,7 +640,7 @@ def render_coois_section(phan_he_code, title_text):
         lines1 + lines2,
         labels1 + labels2,
         loc="upper center",
-        bbox_to_anchor=(0.5, -0.16),
+        bbox_to_anchor=(0.5, -0.15),
         frameon=False,
         ncol=4,
         fontsize=7.5,
@@ -649,7 +649,7 @@ def render_coois_section(phan_he_code, title_text):
     st.pyplot(fig1, use_container_width=True)
 
   with col2:
-    fig2, ax3 = plt.subplots(figsize=(4, 3.8), dpi=200)
+    fig2, ax3 = plt.subplots(figsize=(3.8, 4.0), dpi=200)
     fig2.patch.set_facecolor(Theme.SURFACE)
     ax3.set_facecolor(Theme.SURFACE)
 
@@ -667,7 +667,7 @@ def render_coois_section(phan_he_code, title_text):
           startangle=140,
           pctdistance=0.6,
           labeldistance=1.15,
-          wedgeprops=dict(width=0.42, edgecolor="white"),
+          wedgeprops=dict(width=0.45, edgecolor="white"),
       )
       texts[0].set_color(Theme.SUCCESS)
       texts[0].set_fontweight("bold")
@@ -690,7 +690,7 @@ def render_coois_section(phan_he_code, title_text):
       ax3.text(0, 0, "Chưa có dữ liệu", ha="center")
 
     ax3.set_title(
-        "TỶ LỆ HOÀN THÀNH TỔNG QUAN", fontweight="bold", fontsize=9.5, pad=10
+        "TỶ LỆ HOÀN THÀNH TỔNG QUAN", fontweight="bold", fontsize=10, pad=10
     )
     st.pyplot(fig2, use_container_width=True)
 
@@ -845,6 +845,7 @@ def render_coois_section(phan_he_code, title_text):
     st.pyplot(fig4, use_container_width=True)
 
 
+# ================= 6. RENDER NỘI DUNG CÁC TAB =================
 with tab_ck:
   render_coois_section("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
 with tab_tuti:
