@@ -161,7 +161,7 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= 2. HÀM XUẤT EXCEL CHUYÊN NGHIỆP TÍCH HỢP HÌNH ẢNH =================
+# ================= 2. HÀM XUẤT EXCEL TÍCH HỢP BẢNG & HÌNH ẢNH =================
 def export_excel_report(
     ph_name, df_m, df_plan, df_fam, df_yr, fig1, fig2, fig3, fig4
 ):
@@ -560,7 +560,7 @@ with tab_vat_tu:
       st.dataframe(df_block, use_container_width=True, hide_index=True)
 
 
-# ================= 6. HÀM CHUNG CHO CÁC TAB COOIS QUY CHUẨN CHIỀU CAO & EXCEL =================
+# ================= 6. HÀM COOIS QUY CHUẨN ĐỒNG BỘ CHIỀU CAO 2.8 INCHES =================
 def render_coois_tab_layout(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -764,7 +764,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig2.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.94)
     st.pyplot(fig2, use_container_width=True)
 
-  # HÀNG 2: [CỘT LỌC DÒNG SP NẰM ĐẦU TRÁNH LỆCH]
+  # HÀNG 2: [CỘT LỌC DÒNG SP NẰM ĐẦU TRÁNH LỆCH KHOẢNG THỪA]
   sub_5 = (
       df_sub[
           df_sub["ma_tp"]
@@ -792,6 +792,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
+  # Đặt ô lọc trực tiếp không dùng columns phụ để tránh tạo ô trắng thừa
   sel_fam = st.selectbox(
       "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
   )
@@ -975,89 +976,173 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig4.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
     st.pyplot(fig4, use_container_width=True)
 
-  # ================= 7. BỔ SUNG 4 BẢNG DỮ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL =================
+  # ================= 7. BANNER NÚT XUẤT EXCEL & BẢNG SỐ LIỆU MÀU SẮC =================
   st.markdown("---")
-  col_hdr, col_btn = st.columns([3, 1])
-  with col_hdr:
-    st.markdown(
-        f"### 📑 BẢNG TỔNG HỢP DỮ LIỆU CHI TIẾT - {title_clean.upper()}"
-    )
 
-  # Tạo DataFrames cho 4 bảng tổng hợp
+  # TÍNH TOÁN CÁC CHỈ SỐ TỶ LỆ % HIỆU CHỈNH CHUẨN XÁC
+  pct_orders_m = [
+      ((m_comp_orders[i] / m_tot_orders[i]) * 100.0)
+      if m_tot_orders[i] > 0
+      else 0.0
+      for i in range(12)
+  ]
+  pct_qty_m = [
+      ((m_comp_qty[i] / (m_comp_qty[i] + m_uncomp_qty[i])) * 100.0)
+      if (m_comp_qty[i] + m_uncomp_qty[i]) > 0
+      else 0.0
+      for i in range(12)
+  ]
+
+  total_m3 = sum(m3_qty)
+  pct_fam_contrib = [
+      ((m3_qty[i] / total_m3) * 100.0) if total_m3 > 0 else 0.0
+      for i in range(12)
+  ]
+
+  total_yr = sum(deliv_fams)
+  pct_yr_share = [
+      ((v / total_yr) * 100.0) if total_yr > 0 else 0.0 for v in deliv_fams
+  ]
+
+  # Dữ liệu Bảng 1: Tiến độ tháng
   df_monthly_summary = pd.DataFrame({
       "Tháng": months_labels,
       "Lệnh Hoàn Thành": m_comp_orders,
       "Lệnh Chưa Xong": m_uncomp_orders,
+      "Tỷ Lệ HT Lệnh (%)": pct_orders_m,
       "SL Hoàn Thành": [int(v) for v in m_comp_qty],
       "SL Chưa Xong": [int(v) for v in m_uncomp_qty],
-      "Tỷ Lệ HT (%)": [
-          f"{(m_comp_qty[i]/(m_comp_qty[i]+m_uncomp_qty[i])*100):.1f}%"
-          if (m_comp_qty[i] + m_uncomp_qty[i]) > 0
-          else "0%"
-          for i in range(12)
-      ],
+      "Tỷ Lệ HT SL (%)": pct_qty_m,
   })
 
+  # Dữ liệu Bảng 2: Kế hoạch tổng quan
   df_plan_summary = pd.DataFrame({
       "Chỉ Tiêu": ["Tổng Kế Hoạch", "Đã Giao Hoàn Thành", "Còn Lại Chưa Xong"],
-      "Số Lượng": [
-          f"{int(tot_qty_all):,}",
-          f"{int(deliv_qty_all):,}",
-          f"{int(rem_qty_all):,}",
-      ],
-      "Tỷ Lệ %": [
-          "100.0%",
-          f"{(deliv_qty_all/tot_qty_all*100):.1f}%" if tot_qty_all > 0 else "0%",
-          f"{(rem_qty_all/tot_qty_all*100):.1f}%" if tot_qty_all > 0 else "0%",
+      "Số Lượng": [int(tot_qty_all), int(deliv_qty_all), int(rem_qty_all)],
+      "Tỷ Lệ Cơ Cấu (%)": [
+          100.0,
+          (deliv_qty_all / tot_qty_all * 100.0) if tot_qty_all > 0 else 0.0,
+          (rem_qty_all / tot_qty_all * 100.0) if tot_qty_all > 0 else 0.0,
       ],
   })
 
+  # Dữ liệu Bảng 3: Theo Dòng SP
   df_family_summary = pd.DataFrame({
       "Tháng": months_labels,
       f"SL Sản Xuất ({sel_fam})": [int(v) for v in m3_qty],
+      "Tỷ Lệ Đóng Góp Tháng (%)": pct_fam_contrib,
   })
 
+  # Dữ liệu Bảng 4: Theo Mã Đầu 5 Cả Năm
   df_year_summary = pd.DataFrame({
       "Mã / Dòng SP": fams_x,
       "Tổng SL Hoàn Thành Cả Năm": [int(v) for v in deliv_fams],
+      "Tỷ Lệ Cơ Cấu (%)": pct_yr_share,
   })
 
-  with col_btn:
-    excel_bytes = export_excel_report(
-        phan_he_code,
-        df_monthly_summary,
-        df_plan_summary,
-        df_family_summary,
-        df_year_summary,
-        fig1,
-        fig2,
-        fig3,
-        fig4,
+  # BANNER NÚT XUẤT EXCEL NỔI BẬT Ở HEADER BẢNG
+  col_hdr, col_btn = st.columns([2.5, 1.2])
+  with col_hdr:
+    st.markdown(
+        f"### 📑 BẢNG SỐ LIỆU TỔNG HỢP & TỶ LỆ HIỆU CHỈNH -"
+        f" {title_clean.upper()}"
     )
+
+  excel_bytes = export_excel_report(
+      phan_he_code,
+      df_monthly_summary,
+      df_plan_summary,
+      df_family_summary,
+      df_year_summary,
+      fig1,
+      fig2,
+      fig3,
+      fig4,
+  )
+
+  with col_btn:
     st.download_button(
-        label="📥 Xuất Báo Cáo Excel Pro (Có Biểu Đồ)",
+        label="📥 XUẤT BÁO CÁO EXCEL CHUYÊN NGHIỆP",
         data=excel_bytes,
         file_name=f"BaoCao_{phan_he_code}_{datetime.now().strftime('%Y%m%d')}.xlsx",
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         use_container_width=True,
+        type="primary",  # Tạo nút màu xanh nổi bật
     )
 
-  # Hiển thị 4 Bảng Dữ Liệu
-  t_col1, t_col2 = st.columns([1.5, 1.0])
+  # HIỂN THỊ 4 BẢNG SỐ LIỆU ĐƯỢC FORMAT PROGRESS BAR VÀ SỐ NGUYÊN NẾT
+  t_col1, t_col2 = st.columns([1.6, 1.0])
   with t_col1:
     st.markdown("##### 1. Tiến Độ Sản Xuất Theo Tháng")
-    st.dataframe(df_monthly_summary, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df_monthly_summary,
+        column_config={
+            "Tỷ Lệ HT Lệnh (%)": st.column_config.ProgressColumn(
+                "Tỷ Lệ HT Lệnh", format="%.1f%%", min_value=0, max_value=100
+            ),
+            "Tỷ Lệ HT SL (%)": st.column_config.ProgressColumn(
+                "Tỷ Lệ HT SL", format="%.1f%%", min_value=0, max_value=100
+            ),
+            "SL Hoàn Thành": st.column_config.NumberColumn(
+                "SL Hoàn Thành", format="%d"
+            ),
+            "SL Chưa Xong": st.column_config.NumberColumn(
+                "SL Chưa Xong", format="%d"
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
+
   with t_col2:
     st.markdown("##### 2. Tổng Quan Chỉ Tiêu Kế Hoạch")
-    st.dataframe(df_plan_summary, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df_plan_summary,
+        column_config={
+            "Tỷ Lệ Cơ Cấu (%)": st.column_config.ProgressColumn(
+                "Tỷ Lệ Cơ Cấu", format="%.1f%%", min_value=0, max_value=100
+            ),
+            "Số Lượng": st.column_config.NumberColumn("Số Lượng", format="%d"),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
 
   t_col3, t_col4 = st.columns([1.0, 1.0])
   with t_col3:
     st.markdown(f"##### 3. Chi Tiết Sản Lượng Dòng SP ({sel_fam})")
-    st.dataframe(df_family_summary, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df_family_summary,
+        column_config={
+            "Tỷ Lệ Đóng Góp Tháng (%)": st.column_config.ProgressColumn(
+                "Tỷ Lệ Đóng Góp Tháng",
+                format="%.1f%%",
+                min_value=0,
+                max_value=100,
+            ),
+            f"SL Sản Xuất ({sel_fam})": st.column_config.NumberColumn(
+                f"SL Sản Xuất ({sel_fam})", format="%d"
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
+
   with t_col4:
     st.markdown("##### 4. Tổng Sản Lượng Cả Năm Các Mã Đầu 5")
-    st.dataframe(df_year_summary, use_container_width=True, hide_index=True)
+    st.dataframe(
+        df_year_summary,
+        column_config={
+            "Tỷ Lệ Cơ Cấu (%)": st.column_config.ProgressColumn(
+                "Tỷ Lệ Cơ Cấu", format="%.1f%%", min_value=0, max_value=100
+            ),
+            "Tổng SL Hoàn Thành Cả Năm": st.column_config.NumberColumn(
+                "Tổng SL Cả Năm", format="%d"
+            ),
+        },
+        use_container_width=True,
+        hide_index=True,
+    )
 
 
 # ================= 8. RENDER NỘI DUNG CÁC TAB =================
