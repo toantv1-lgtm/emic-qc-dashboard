@@ -289,24 +289,20 @@ def chart_card_close():
 
 
 # Bảng Màu Ngữ Nghĩa (giữ ý nghĩa dữ liệu gốc, tinh chỉnh cho hệ thống thiết kế mới)
-COLOR_SUCCESS = "#10B981"  # Xanh lá (Đạt / HT)
+COLOR_SUCCESS = "#0EA968"  # Xanh lá / Teal (Đạt / HT)
 COLOR_PRIMARY = "#4F46E5"  # Indigo (Lệnh / FT)
-COLOR_DANGER = "#EF4444"  # Đỏ (Lỗi / Lệnh Chưa Xong / Sai Hỏng %)
-COLOR_WARNING = "#F59E0B"  # Cam (Đặc nhượng / SL Chưa Xong)
-COLOR_PURPLE = "#A855F7"  # Tím (BY Sample)
-COLOR_TEXT = "#111827"
+COLOR_DANGER = "#E23D4D"  # Đỏ / Rose (Lỗi / Lệnh Chưa Xong / Sai Hỏng %)
+COLOR_WARNING = "#EA8A0A"  # Cam / Amber (Đặc nhượng / SL Chưa Xong)
+COLOR_PURPLE = "#9333EA"  # Tím (BY Sample)
+COLOR_TEXT = "#0F1222"
 
 DISTINCT_COLORS = [
-    "#4F46E5",
-    "#10B981",
-    "#F59E0B",
-    "#EF4444",
-    "#A855F7",
-    "#06B6D4",
-    "#F43F5E",
-    "#84CC16",
-    "#F97316",
-    "#14B8A6",
+    "#4F46E5",  # Indigo
+    "#0EA968",  # Teal / Xanh lá
+    "#EA8A0A",  # Amber / Cam
+    "#E23D4D",  # Rose / Đỏ
+    "#9333EA",  # Purple / Tím
+    "#0891B2",  # Slate-cyan / Xanh lam đậm
 ]
 
 PLOTLY_FONT = "Inter, -apple-system, Segoe UI, sans-serif"
@@ -694,7 +690,7 @@ with tab_vat_tu:
             "value": f"{int(total_ud02 + total_ud03):,}",
             "icon": "⚠️",
             "color": COLOR_WARNING,
-            "color_soft": "#FFFBEB",
+            "color_soft": "#FFF8EB",
             "sub": f"UD02: {int(total_ud02):,} · UD03: {int(total_ud03):,}",
         },
         {
@@ -702,7 +698,7 @@ with tab_vat_tu:
             "value": f"{int(total_ca_block):,}",
             "icon": "🚫",
             "color": COLOR_DANGER,
-            "color_soft": "#FEF2F2",
+            "color_soft": "#FEF2F3",
             "sub": f"{len(top_block_dict):,} mã vật tư liên quan",
         },
     ])
@@ -766,7 +762,7 @@ with tab_vat_tu:
 
       fig1.update_layout(
           barmode="stack",
-          margin=dict(l=30, r=20, t=10, b=90),
+          margin=dict(l=30, r=20, t=8, b=55),
           height=PLOT_HEIGHT,
           paper_bgcolor="#FFFFFF",
           plot_bgcolor="#FFFFFF",
@@ -776,11 +772,11 @@ with tab_vat_tu:
               y=-0.22,
               xanchor="center",
               x=0.5,
-              font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
+              font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280"),
           ),
       )
       fig1.update_xaxes(
-          showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
+          showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
       )
       fig1.update_yaxes(
           title_text="← Số Lượng Lệnh",
@@ -837,7 +833,7 @@ with tab_vat_tu:
           ]
       )
       fig2.update_layout(
-          margin=dict(l=30, r=30, t=10, b=90),
+          margin=dict(l=30, r=30, t=8, b=55),
           height=PLOT_HEIGHT,
           paper_bgcolor="#FFFFFF",
           showlegend=False,
@@ -861,7 +857,6 @@ with tab_vat_tu:
       )
       chart_card_close()
 
-    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
     sorted_blocks = sorted(
         top_block_dict.values(),
         key=lambda x: (x["ud03"] + x["ud02"], x["ca_block"], x["ft_total"]),
@@ -1025,7 +1020,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
           "value": f"{int(rem_qty_kpi):,}",
           "icon": "⏳",
           "color": COLOR_WARNING,
-          "color_soft": "#FFFBEB",
+          "color_soft": "#FFF8EB",
           "sub": f"{int(total_uncomp_orders_kpi):,} lệnh chưa xong",
       },
       {
@@ -1033,7 +1028,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
           "value": f"{pct_orders_kpi:.1f}%",
           "icon": "📈",
           "color": COLOR_DANGER if pct_orders_kpi < 80 else COLOR_SUCCESS,
-          "color_soft": "#FEF2F2" if pct_orders_kpi < 80 else "#ECFDF5",
+          "color_soft": "#FEF2F3" if pct_orders_kpi < 80 else "#ECFDF5",
           "sub": f"Trên tổng {int(total_orders_kpi):,} lệnh",
       },
   ])
@@ -1111,7 +1106,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig1.update_layout(
         barmode="group",
         bargap=0.3,
-        margin=dict(l=30, r=20, t=25, b=90),
+        margin=dict(l=30, r=20, t=8, b=55),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -1121,11 +1116,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
             y=-0.22,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
+            font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280"),
         ),
     )
     fig1.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig1.update_yaxes(
         title_text="← Tổng Lệnh",
@@ -1183,7 +1178,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         ]
     )
     fig2.update_layout(
-        margin=dict(l=30, r=30, t=10, b=90),
+        margin=dict(l=30, r=30, t=8, b=55),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
         showlegend=False,
@@ -1286,7 +1281,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig3.update_layout(
-        margin=dict(l=30, r=20, t=10, b=50),
+        margin=dict(l=30, r=20, t=8, b=36),
         height=PLOT_HEIGHT - 40,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -1294,7 +1289,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig3.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig3.update_yaxes(
         title_text="SL Hoàn Thành [Log]",
@@ -1375,7 +1370,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig4.update_layout(
-        margin=dict(l=30, r=20, t=10, b=50),
+        margin=dict(l=30, r=20, t=8, b=36),
         height=PLOT_HEIGHT - 40,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -1383,7 +1378,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig4.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig4.update_yaxes(
         title_text="Số Lượng SP [Log]",
@@ -1477,7 +1472,6 @@ def render_coois_tab_layout(phan_he_code, title_text):
   plt.close(fig4_mpl)
 
   # ================= BẢNG SỐ LIỆU TỔNG HỢP & NÚT EXCEL =================
-  st.markdown("---")
   pct_orders_m = [
       ((m_comp_orders[i] / m_tot_orders[i]) * 100.0)
       if m_tot_orders[i] > 0
