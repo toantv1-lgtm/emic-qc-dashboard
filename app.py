@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD & GIAO DIỆN CHUYÊN NGHIỆP (FULL-WIDTH) =================
+# ================= 1. CẤU HÌNH DASHBOARD & HỆ THỐNG THIẾT KẾ HIỆN ĐẠI =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -26,114 +26,181 @@ st.set_page_config(
 st.markdown(
     """
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         header[data-testid="stHeader"] { display: none !important; }
 
-        html, body, [class*="css"], .stApp {
-            font-family: 'Segoe UI', Calibri, Arial, sans-serif !important;
-            background-color: #F8FAFC !important;
+        :root {
+            --bg: #F7F8FA;
+            --surface: #FFFFFF;
+            --border: #EBEDF1;
+            --text: #111827;
+            --text-muted: #6B7280;
+            --primary: #4F46E5;
+            --primary-soft: #EEF0FF;
+            --success: #10B981;
+            --success-soft: #ECFDF5;
+            --danger: #EF4444;
+            --danger-soft: #FEF2F2;
+            --warning: #F59E0B;
+            --warning-soft: #FFFBEB;
+            --purple: #A855F7;
+            --radius: 14px;
+            --shadow: 0 1px 2px rgba(17,24,39,0.04), 0 1px 6px rgba(17,24,39,0.04);
+            --shadow-hover: 0 4px 16px rgba(17,24,39,0.08);
         }
 
-        /* Full màn hình, không giới hạn chiều rộng, không bị cắt/che */
-        html, body {
-            overflow-x: hidden;
-            overflow-y: auto !important;
-            height: auto !important;
+        html, body, [class*="css"], .stApp {
+            font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif !important;
+            background-color: var(--bg) !important;
+            color: var(--text);
         }
+        html, body { overflow-x: hidden; overflow-y: auto !important; height: auto !important; }
+        h1, h2, h3, h4, h5, h6, p, span, div { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
+
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
             padding-top: 0.9rem !important;
-            padding-bottom: 2rem !important;
-            padding-left: 1.4rem !important;
-            padding-right: 1.4rem !important;
+            padding-bottom: 2.5rem !important;
+            padding-left: 1.8rem !important;
+            padding-right: 1.8rem !important;
             max-width: 100% !important;
             width: 100% !important;
             overflow: visible !important;
         }
         [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-            overflow: visible !important;
-            height: auto !important;
+            overflow: visible !important; height: auto !important;
         }
 
-        /* Khung Lọc Dữ Liệu (đặt trong sidebar, thu gọn mặc định để tận dụng full-width) */
-        section[data-testid="stSidebar"] { background-color: #FFFFFF; }
+        /* ============ SIDEBAR ============ */
+        section[data-testid="stSidebar"] { background-color: #FFFFFF; border-right: 1px solid var(--border); }
         .sidebar-heading {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748B;
-            text-transform: uppercase;
-            letter-spacing: 0.06em;
-            margin: 4px 0 10px 0;
+            font-size: 11px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.07em; margin: 4px 0 10px 0;
         }
 
-        /* Tabs Navigation - Nút Riêng Lẻ, Bo Tròn, Đổ Bóng, Căn Trái (giống ảnh mẫu) */
+        /* ============ TOP PAGE HEADER (mỏng, không banner) ============ */
+        .page-header {
+            display: flex; align-items: flex-end; justify-content: space-between;
+            padding-bottom: 14px; margin-bottom: 18px;
+            border-bottom: 1px solid var(--border);
+        }
+        .page-header .ph-title { font-size: 21px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.02em; }
+        .page-header .ph-subtitle { font-size: 12.5px; color: var(--text-muted); margin: 3px 0 0 0; font-weight: 500; }
+        .page-header .ph-meta {
+            font-size: 12px; font-weight: 600; color: var(--primary);
+            background: var(--primary-soft); padding: 6px 14px; border-radius: 999px;
+            white-space: nowrap;
+        }
+
+        /* ============ TABS -> UNDERLINE STYLE (Linear/Vercel) ============ */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: flex-start !important;
-            gap: 10px !important;
+            gap: 28px !important;
             background-color: transparent !important;
-            padding: 4px 0px 16px 0px !important;
-            border-bottom: none !important;
+            padding: 0px !important;
+            border-bottom: 1px solid var(--border) !important;
+            margin-bottom: 20px !important;
         }
         .stTabs [data-baseweb="tab"] {
-            background-color: #94A3B8 !important;
-            color: #FFFFFF !important;
-            border-radius: 8px !important;
-            padding: 9px 22px !important;
+            background-color: transparent !important;
+            color: var(--text-muted) !important;
+            border-radius: 0px !important;
+            padding: 4px 2px 12px 2px !important;
             border: none !important;
+            border-bottom: 2.5px solid transparent !important;
             font-weight: 600 !important;
             font-size: 14px !important;
-            font-family: 'Segoe UI', Calibri, sans-serif !important;
-            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12) !important;
-            transition: all 0.15s ease;
+            font-family: 'Inter', sans-serif !important;
+            transition: color 0.15s ease, border-color 0.15s ease;
         }
+        .stTabs [data-baseweb="tab"]:hover { color: var(--text) !important; }
         .stTabs [aria-selected="true"] {
-            background-color: #3B82F6 !important;
-            color: #FFFFFF !important;
-            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
+            color: var(--primary) !important;
+            border-bottom: 2.5px solid var(--primary) !important;
         }
+        .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
-        /* Card Khung Bao Biểu Đồ */
+        /* ============ KPI CARDS ============ */
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+        .kpi-card {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 16px 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+            transition: box-shadow 0.15s ease, transform 0.15s ease;
+        }
+        .kpi-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+        .kpi-card::before {
+            content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            background: var(--accent, var(--primary));
+        }
+        .kpi-card .kpi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .kpi-card .kpi-label {
+            font-size: 11.5px; font-weight: 700; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 0.04em;
+        }
+        .kpi-card .kpi-icon {
+            width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center;
+            justify-content: center; font-size: 13px; background: var(--accent-soft, var(--primary-soft));
+        }
+        .kpi-card .kpi-value { font-size: 25px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
+        .kpi-card .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; font-weight: 500; }
+
+        /* ============ CHART CARDS (tiêu đề HTML thay vì vẽ trong Plotly) ============ */
         .chart-card {
-            background-color: #FFFFFF;
-            border-radius: 12px;
-            border: 1px solid #E2E8F0;
-            padding: 12px 16px 6px 16px;
-            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
-            margin-bottom: 14px;
+            background-color: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
+            padding: 16px 18px 8px 18px; box-shadow: var(--shadow); margin-bottom: 16px;
         }
+        .chart-card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
+        .chart-card-title { font-size: 13.5px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+        .chart-card-caption { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
 
-        .section-heading {
-            font-size: 15px;
-            font-weight: 700;
-            color: #0F172A;
-            margin: 4px 0 12px 2px;
-        }
+        .section-heading { font-size: 15px; font-weight: 700; color: var(--text); margin: 4px 0 12px 2px; }
 
-        /* Bảng dữ liệu */
+        /* ============ BẢNG DỮ LIỆU ============ */
         div[data-testid="stDataFrame"] {
-            border: 1px solid #E2E8F0 !important;
-            border-radius: 10px !important;
-            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+            border: 1px solid var(--border) !important; border-radius: 12px !important;
+            box-shadow: var(--shadow); overflow: hidden;
         }
 
-        /* Nút bấm */
+        /* ============ INPUT / SELECT ============ */
+        div[data-baseweb="select"] > div, .stDateInput input {
+            border-radius: 9px !important; font-family: 'Inter', sans-serif !important;
+            border-color: var(--border) !important;
+        }
+
+        /* ============ BUTTONS ============ */
         .stButton button, .stDownloadButton button {
-            border-radius: 8px !important;
-            font-weight: 600 !important;
-            font-family: 'Segoe UI', Calibri, sans-serif !important;
+            border-radius: 9px !important; font-weight: 600 !important; font-family: 'Inter', sans-serif !important;
+            border: 1px solid var(--border) !important;
         }
         .stButton button[kind="primary"], .stDownloadButton button[kind="primary"] {
-            background-color: #3B82F6 !important;
-            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35) !important;
+            background-color: var(--primary) !important; border: none !important;
+            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
         }
 
+        div[data-testid="stAlert"] { border-radius: 12px !important; }
         div[data-testid="stVerticalBlock"] > div { gap: 0.3rem !important; }
 
         ::-webkit-scrollbar { width: 9px; height: 9px; }
-        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
     </style>
 """,
     unsafe_allow_html=True,
 )
+
+
+def render_page_header(title, subtitle, meta_text):
+  st.markdown(
+      f"""
+      <div class="page-header">
+          <div>
+              <p class="ph-title">{title}</p>
+              <p class="ph-subtitle">{subtitle}</p>
+          </div>
+          <div class="ph-meta">📅 {meta_text}</div>
+      </div>
+      """,
+      unsafe_allow_html=True,
+  )
 
 
 def render_section_heading(text):
@@ -142,16 +209,53 @@ def render_section_heading(text):
   )
 
 
-# Bảng Màu Chuẩn Nguyên Bản (đúng như thiết kế mẫu)
+def render_kpi_cards(items):
+  """items: list of {label, value, icon, color, color_soft, sub}"""
+  cards_html = ""
+  for it in items:
+    color = it.get("color", "#4F46E5")
+    color_soft = it.get("color_soft", "#EEF0FF")
+    sub = it.get("sub", "")
+    sub_html = f'<div class="kpi-sub">{sub}</div>' if sub else ""
+    cards_html += f"""
+        <div class="kpi-card" style="--accent: {color}; --accent-soft: {color_soft};">
+            <div class="kpi-head">
+                <span class="kpi-label">{it['label']}</span>
+                <span class="kpi-icon">{it.get('icon', '📌')}</span>
+            </div>
+            <div class="kpi-value">{it['value']}</div>
+            {sub_html}
+        </div>
+    """
+  st.markdown(f'<div class="kpi-row">{cards_html}</div>', unsafe_allow_html=True)
+
+
+def chart_card_open(title, caption=""):
+  cap_html = f'<span class="chart-card-caption">{caption}</span>' if caption else ""
+  st.markdown(
+      f"""<div class="chart-card">
+          <div class="chart-card-header">
+              <span class="chart-card-title">{title}</span>
+              {cap_html}
+          </div>""",
+      unsafe_allow_html=True,
+  )
+
+
+def chart_card_close():
+  st.markdown("</div>", unsafe_allow_html=True)
+
+
+# Bảng Màu Ngữ Nghĩa (giữ ý nghĩa dữ liệu gốc, tinh chỉnh cho hệ thống thiết kế mới)
 COLOR_SUCCESS = "#10B981"  # Xanh lá (Đạt / HT)
-COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh / FT)
+COLOR_PRIMARY = "#4F46E5"  # Indigo (Lệnh / FT)
 COLOR_DANGER = "#EF4444"  # Đỏ (Lỗi / Lệnh Chưa Xong / Sai Hỏng %)
 COLOR_WARNING = "#F59E0B"  # Cam (Đặc nhượng / SL Chưa Xong)
 COLOR_PURPLE = "#A855F7"  # Tím (BY Sample)
-COLOR_TEXT = "#0F172A"
+COLOR_TEXT = "#111827"
 
 DISTINCT_COLORS = [
-    "#3B82F6",
+    "#4F46E5",
     "#10B981",
     "#F59E0B",
     "#EF4444",
@@ -163,7 +267,9 @@ DISTINCT_COLORS = [
     "#14B8A6",
 ]
 
-PLOTLY_FONT = "Segoe UI, Calibri, sans-serif"
+PLOTLY_FONT = "Inter, -apple-system, Segoe UI, sans-serif"
+PLOTLY_GRID = "#F1F2F6"
+PLOTLY_AXIS_TEXT = "#6B7280"
 
 # Cấu hình Matplotlib phông Calibri (dùng riêng cho ảnh chèn Excel - chuẩn in ấn văn phòng)
 plt.rcParams["font.family"] = "sans-serif"
@@ -376,11 +482,10 @@ with st.sidebar:
 
 df_qa32, df_coois = load_data(tu_date, den_date)
 
-st.markdown(
-    f"<div style='color:#64748B; font-size:12.5px; font-weight:600; margin: 0 0 6px 2px;'>"
-    f"📅 Kỳ báo cáo: {tu_date.strftime('%d/%m/%Y')} — {den_date.strftime('%d/%m/%Y')}"
-    f"&nbsp;&nbsp;·&nbsp;&nbsp;Mở sidebar (góc trên trái) để đổi khoảng ngày</div>",
-    unsafe_allow_html=True,
+render_page_header(
+    "📊 EMIC QC Dashboard",
+    "Tổng Công Ty Thiết Bị Điện EMIC · Phòng Quản Lý Chất Lượng — nhấn ☰ góc trên trái để đổi khoảng ngày",
+    f"{tu_date.strftime('%d/%m/%Y')} → {den_date.strftime('%d/%m/%Y')}",
 )
 
 
@@ -525,11 +630,49 @@ with tab_vat_tu:
     pct_ud01 = (total_ud01 / total_lots * 100) if total_lots > 0 else 0.0
     total_by_all = sum(by_inspected_m) + sum(by_uninspected_m)
 
+    render_kpi_cards([
+        {
+            "label": "Tổng Vật Tư Về (FT)",
+            "value": f"{int(total_ft_all):,}",
+            "icon": "📦",
+            "color": COLOR_PRIMARY,
+            "color_soft": "#EEF0FF",
+            "sub": f"{int(total_by_all):,} mẫu đã kiểm (BY)",
+        },
+        {
+            "label": "Tỷ Lệ Đạt (UD 01)",
+            "value": f"{pct_ud01:.1f}%",
+            "icon": "✅",
+            "color": COLOR_SUCCESS,
+            "color_soft": "#ECFDF5",
+            "sub": f"{int(total_ud01):,} / {int(total_lots):,} lô",
+        },
+        {
+            "label": "Đặc Nhượng / Trả Lại",
+            "value": f"{int(total_ud02 + total_ud03):,}",
+            "icon": "⚠️",
+            "color": COLOR_WARNING,
+            "color_soft": "#FFFBEB",
+            "sub": f"UD02: {int(total_ud02):,} · UD03: {int(total_ud03):,}",
+        },
+        {
+            "label": "SL Bị Block (CA)",
+            "value": f"{int(total_ca_block):,}",
+            "icon": "🚫",
+            "color": COLOR_DANGER,
+            "color_soft": "#FEF2F2",
+            "sub": f"{len(top_block_dict):,} mã vật tư liên quan",
+        },
+    ])
+
     PLOT_HEIGHT = 380
 
     col1, col2 = st.columns([2.1, 1.0])
     with col1:
-      st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+      chart_card_open(
+          "Số Lượng Lệnh Kiểm & Tổng Vật Tư Về / Số Mẫu Kiểm",
+          "Theo tháng",
+      )
       fig1 = make_subplots(specs=[[{"secondary_y": True}]])
       fig1.add_trace(
           go.Bar(
@@ -580,13 +723,8 @@ with tab_vat_tu:
       )
 
       fig1.update_layout(
-          title=dict(
-              text="BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
-              font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
-              x=0.5,
-          ),
           barmode="stack",
-          margin=dict(l=30, r=30, t=50, b=90),
+          margin=dict(l=30, r=20, t=10, b=90),
           height=PLOT_HEIGHT,
           paper_bgcolor="#FFFFFF",
           plot_bgcolor="#FFFFFF",
@@ -596,11 +734,11 @@ with tab_vat_tu:
               y=-0.22,
               xanchor="center",
               x=0.5,
-              font=dict(size=11, family="Segoe UI, Calibri, sans-serif"),
+              font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
           ),
       )
       fig1.update_xaxes(
-          showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
+          showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
       )
       fig1.update_yaxes(
           title_text="← Số Lượng Lệnh",
@@ -620,10 +758,10 @@ with tab_vat_tu:
       st.plotly_chart(
           fig1, use_container_width=True, config={"displayModeBar": False}
       )
-      st.markdown("</div>", unsafe_allow_html=True)
+      chart_card_close()
 
     with col2:
-      st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+      chart_card_open("Tỷ Lệ Vật Tư Đạt vs Bị Block Lỗi")
       ok_cnt = max(0.0, total_ft_all - total_ca_block)
       pct_ok = (ok_cnt / total_ft_all * 100) if total_ft_all > 0 else 0
       pct_block = (
@@ -648,7 +786,7 @@ with tab_vat_tu:
                   textposition="outside",
                   textfont=dict(
                       size=12,
-                      family="Segoe UI, Calibri, sans-serif",
+                      family="Inter, -apple-system, Segoe UI, sans-serif",
                       color=[COLOR_SUCCESS, COLOR_DANGER],
                   ),
                   direction="clockwise",
@@ -657,12 +795,7 @@ with tab_vat_tu:
           ]
       )
       fig2.update_layout(
-          title=dict(
-              text="TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
-              font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
-              x=0.5,
-          ),
-          margin=dict(l=30, r=30, t=50, b=90),
+          margin=dict(l=30, r=30, t=10, b=90),
           height=PLOT_HEIGHT,
           paper_bgcolor="#FFFFFF",
           showlegend=False,
@@ -676,7 +809,7 @@ with tab_vat_tu:
                   x=0.5,
                   y=0.5,
                   font_size=12,
-                  font_family="Segoe UI, Calibri, sans-serif",
+                  font_family="Inter, -apple-system, Segoe UI, sans-serif",
                   showarrow=False,
               )
           ],
@@ -684,43 +817,98 @@ with tab_vat_tu:
       st.plotly_chart(
           fig2, use_container_width=True, config={"displayModeBar": False}
       )
-      st.markdown("</div>", unsafe_allow_html=True)
+      chart_card_close()
 
-    # DANH SÁCH VẬT TƯ BỊ BLOCK & UD02, UD03
-    st.markdown("---")
-    st.markdown(
-        "<h5 style='color:#EF4444; margin-bottom:10px; font-family:"
-        " \"Segoe UI\", Calibri, sans-serif;'>🚨 DANH SÁCH VẬT TƯ BỊ BLOCK &"
-        " UD02, UD03</h5>",
-        unsafe_allow_html=True,
-    )
+    st.markdown("<div style='height:10px;'></div>", unsafe_allow_html=True)
     sorted_blocks = sorted(
         top_block_dict.values(),
         key=lambda x: (x["ud03"] + x["ud02"], x["ca_block"], x["ft_total"]),
         reverse=True,
     )
     if sorted_blocks:
-      df_block = pd.DataFrame(sorted_blocks)
-      df_block["Tổng SL Block (CA) / SL Về"] = df_block.apply(
-          lambda r: f"{r['ca_block']:,.0f} / {r['ft_total']:,.0f}", axis=1
-      )
-      df_block = df_block[[
-          "ma_vt",
-          "ten_vt",
-          "ncc",
-          "ud02",
-          "ud03",
-          "Tổng SL Block (CA) / SL Về",
-      ]]
-      df_block.columns = [
-          "Mã Vật Tư",
-          "Tên Vật Tư",
-          "Nhà Cung Cấp",
-          "Số Lượt UD 02",
-          "Số Lượt UD 03",
-          "Tổng SL Block (CA) / SL Về",
-      ]
-      st.dataframe(df_block, use_container_width=True, hide_index=True)
+      col_rank, col_table = st.columns([1.0, 1.6])
+
+      # --- Xếp hạng nhà cung cấp bị block nhiều nhất (insight mới) ---
+      supplier_agg = {}
+      for item in sorted_blocks:
+        ncc_name = item["ncc"].strip() if item["ncc"] else "Không rõ NCC"
+        supplier_agg[ncc_name] = (
+            supplier_agg.get(ncc_name, 0.0) + item["ca_block"]
+        )
+      top_suppliers = sorted(
+          supplier_agg.items(), key=lambda x: x[1], reverse=True
+      )[:8]
+
+      with col_rank:
+        if top_suppliers:
+          sup_names = [clean_emoji(s[0])[:28] for s in top_suppliers][::-1]
+          sup_vals = [s[1] for s in top_suppliers][::-1]
+          chart_card_open(
+              "Top Nhà Cung Cấp Bị Block Nhiều Nhất", "Theo tổng SL (CA)"
+          )
+          fig_sup = go.Figure(
+              go.Bar(
+                  x=sup_vals,
+                  y=sup_names,
+                  orientation="h",
+                  marker_color=COLOR_DANGER,
+                  text=[f"{v:,.0f}" for v in sup_vals],
+                  textposition="outside",
+                  textfont=dict(
+                      size=11, family=PLOTLY_FONT, color=COLOR_DANGER
+                  ),
+              )
+          )
+          fig_sup.update_layout(
+              margin=dict(l=10, r=45, t=10, b=10),
+              height=max(230, 32 * len(sup_names)),
+              paper_bgcolor="#FFFFFF",
+              plot_bgcolor="#FFFFFF",
+              showlegend=False,
+          )
+          fig_sup.update_xaxes(
+              showgrid=True,
+              gridcolor=PLOTLY_GRID,
+              tickfont=dict(size=10.5, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
+          )
+          fig_sup.update_yaxes(
+              showgrid=False,
+              tickfont=dict(size=11, family=PLOTLY_FONT, color=COLOR_TEXT),
+          )
+          st.plotly_chart(
+              fig_sup, use_container_width=True, config={"displayModeBar": False}
+          )
+          chart_card_close()
+
+      with col_table:
+        chart_card_open(
+            "🚨 Danh Sách Vật Tư Bị Block & UD02, UD03",
+            f"{len(sorted_blocks)} mã vật tư",
+        )
+        df_block = pd.DataFrame(sorted_blocks)
+        df_block["Tổng SL Block (CA) / SL Về"] = df_block.apply(
+            lambda r: f"{r['ca_block']:,.0f} / {r['ft_total']:,.0f}", axis=1
+        )
+        df_block = df_block[[
+            "ma_vt",
+            "ten_vt",
+            "ncc",
+            "ud02",
+            "ud03",
+            "Tổng SL Block (CA) / SL Về",
+        ]]
+        df_block.columns = [
+            "Mã Vật Tư",
+            "Tên Vật Tư",
+            "Nhà Cung Cấp",
+            "Số Lượt UD 02",
+            "Số Lượt UD 03",
+            "Tổng SL Block (CA) / SL Về",
+        ]
+        st.dataframe(
+            df_block, use_container_width=True, hide_index=True, height=360
+        )
+        chart_card_close()
     else:
       st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03")
 
@@ -762,13 +950,59 @@ def render_coois_tab_layout(phan_he_code, title_text):
       m_uncomp_orders[m_idx] += 1
 
   title_clean = clean_emoji(title_text)
+
+  rem_qty_kpi = max(0.0, tot_qty_all - deliv_qty_all)
+  pct_deliv_kpi = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0.0
+  total_orders_kpi = sum(m_tot_orders)
+  total_uncomp_orders_kpi = sum(m_uncomp_orders)
+  pct_orders_kpi = (
+      ((total_orders_kpi - total_uncomp_orders_kpi) / total_orders_kpi * 100)
+      if total_orders_kpi > 0
+      else 0.0
+  )
+
+  render_kpi_cards([
+      {
+          "label": "Tổng Kế Hoạch",
+          "value": f"{int(tot_qty_all):,}",
+          "icon": "🎯",
+          "color": COLOR_PRIMARY,
+          "color_soft": "#EEF0FF",
+          "sub": f"{int(total_orders_kpi):,} lệnh sản xuất",
+      },
+      {
+          "label": "Đã Hoàn Thành",
+          "value": f"{int(deliv_qty_all):,}",
+          "icon": "✅",
+          "color": COLOR_SUCCESS,
+          "color_soft": "#ECFDF5",
+          "sub": f"Tỷ lệ SL: {pct_deliv_kpi:.1f}%",
+      },
+      {
+          "label": "Còn Lại Chưa Xong",
+          "value": f"{int(rem_qty_kpi):,}",
+          "icon": "⏳",
+          "color": COLOR_WARNING,
+          "color_soft": "#FFFBEB",
+          "sub": f"{int(total_uncomp_orders_kpi):,} lệnh chưa xong",
+      },
+      {
+          "label": "Tỷ Lệ Lệnh Hoàn Thành",
+          "value": f"{pct_orders_kpi:.1f}%",
+          "icon": "📈",
+          "color": COLOR_DANGER if pct_orders_kpi < 80 else COLOR_SUCCESS,
+          "color_soft": "#FEF2F2" if pct_orders_kpi < 80 else "#ECFDF5",
+          "sub": f"Trên tổng {int(total_orders_kpi):,} lệnh",
+      },
+  ])
+
   PLOT_HEIGHT = 380
 
   # HÀNG 1: BIỂU ĐỒ SẢN XUẤT (2.1) & DONUT (1.0)
   col1, col2 = st.columns([2.1, 1.0])
 
   with col1:
-    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    chart_card_open(f"Tiến Độ Sản Xuất — {title_clean}", "Theo tháng")
     fig1 = make_subplots(specs=[[{"secondary_y": True}]])
     m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
 
@@ -826,23 +1060,16 @@ def render_coois_tab_layout(phan_he_code, title_text):
             text=f"<b>{pct:.0f}%</b>",
             showarrow=False,
             font=dict(
-                color=COLOR_SUCCESS, size=11, family="Segoe UI, Calibri, sans-serif"
+                color=COLOR_SUCCESS, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"
             ),
             yref="y2",
             xshift=14,
         )
 
     fig1.update_layout(
-        title=dict(
-            text=f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
-            font=dict(
-                size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"
-            ),
-            x=0.5,
-        ),
         barmode="group",
         bargap=0.3,
-        margin=dict(l=30, r=30, t=50, b=90),
+        margin=dict(l=30, r=20, t=25, b=90),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -852,11 +1079,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
             y=-0.22,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, family="Segoe UI, Calibri, sans-serif"),
+            font=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
         ),
     )
     fig1.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
     )
     fig1.update_yaxes(
         title_text="← Tổng Lệnh",
@@ -878,10 +1105,10 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.plotly_chart(
         fig1, use_container_width=True, config={"displayModeBar": False}
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+    chart_card_close()
 
   with col2:
-    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    chart_card_open("Tỷ Lệ Hoàn Thành Tổng Quan")
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
     pct_deliv = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0
     pct_rem = 100.0 - pct_deliv if tot_qty_all > 0 else 0.0
@@ -905,7 +1132,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
                 textposition="outside",
                 textfont=dict(
                     size=12,
-                    family="Segoe UI, Calibri, sans-serif",
+                    family="Inter, -apple-system, Segoe UI, sans-serif",
                     color=[COLOR_SUCCESS, COLOR_DANGER],
                 ),
                 direction="clockwise",
@@ -914,14 +1141,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         ]
     )
     fig2.update_layout(
-        title=dict(
-            text="TỶ LỆ HOÀN THÀNH TỔNG QUAN",
-            font=dict(
-                size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"
-            ),
-            x=0.5,
-        ),
-        margin=dict(l=30, r=30, t=50, b=90),
+        margin=dict(l=30, r=30, t=10, b=90),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
         showlegend=False,
@@ -934,7 +1154,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
                 x=0.5,
                 y=0.5,
                 font_size=12,
-                font_family="Segoe UI, Calibri, sans-serif",
+                font_family="Inter, -apple-system, Segoe UI, sans-serif",
                 showarrow=False,
             )
         ],
@@ -942,7 +1162,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.plotly_chart(
         fig2, use_container_width=True, config={"displayModeBar": False}
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+    chart_card_close()
 
   # HÀNG 2: BỘ LỌC DÒNG SP
   sub_5 = (
@@ -977,7 +1197,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
   # --- DƯỚI TRÁI: SẢN LƯỢNG DÒNG SP & ĐƯỜNG TỶ LỆ SAI HỎNG (%) ---
   with col3:
-    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    chart_card_open(f"Sản Lượng — Dòng: {clean_emoji(sel_fam)}")
     m3_qty = [0.0] * 12
     if not sub_5.empty:
       sub_5_df = sub_5.copy()
@@ -1005,7 +1225,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             marker_color=COLOR_PRIMARY,
             text=[f"{int(v):,}" if v > 0 else "" for v in m3_qty],
             textposition="outside",
-            textfont=dict(color=COLOR_PRIMARY, size=11, family="Segoe UI, Calibri, sans-serif"),
+            textfont=dict(color=COLOR_PRIMARY, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
         ),
         secondary_y=False,
     )
@@ -1024,12 +1244,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig3.update_layout(
-        title=dict(
-            text=f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
-            font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
-            x=0.5,
-        ),
-        margin=dict(l=30, r=30, t=50, b=50),
+        margin=dict(l=30, r=20, t=10, b=50),
         height=PLOT_HEIGHT - 40,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -1037,7 +1252,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig3.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
     )
     fig3.update_yaxes(
         title_text="SL Hoàn Thành [Log]",
@@ -1059,11 +1274,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.plotly_chart(
         fig3, use_container_width=True, config={"displayModeBar": False}
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+    chart_card_close()
 
   # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG MÃ ĐẦU 5 & ĐƯỜNG TỶ LỆ SAI HỎNG (%) ---
   with col4:
-    st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    chart_card_open("Tổng Sản Lượng Cả Năm Các Mã Đầu 5")
     if not sub_5.empty:
       summary_fams = (
           sub_5.groupby("mat_prefix")[["sl_ht"]].sum().reset_index()
@@ -1099,7 +1314,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             marker_color=bar_colors,
             text=[f"{int(v):,}" if v > 0 else "" for v in deliv_fams],
             textposition="outside",
-            textfont=dict(color=bar_colors, size=11, family="Segoe UI, Calibri, sans-serif"),
+            textfont=dict(color=bar_colors, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
         ),
         secondary_y=False,
     )
@@ -1118,12 +1333,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig4.update_layout(
-        title=dict(
-            text="TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
-            font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
-            x=0.5,
-        ),
-        margin=dict(l=30, r=30, t=50, b=50),
+        margin=dict(l=30, r=20, t=10, b=50),
         height=PLOT_HEIGHT - 40,
         paper_bgcolor="#FFFFFF",
         plot_bgcolor="#FFFFFF",
@@ -1131,7 +1341,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig4.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif")
     )
     fig4.update_yaxes(
         title_text="Số Lượng SP [Log]",
@@ -1153,7 +1363,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.plotly_chart(
         fig4, use_container_width=True, config={"displayModeBar": False}
     )
-    st.markdown("</div>", unsafe_allow_html=True)
+    chart_card_close()
 
   # ================= XUẤT ẢNH MATPLOTLIB ẨN CHO EXCEL =================
   fig1_mpl, ax_m1 = plt.subplots(figsize=(8, 3.2), dpi=200)
