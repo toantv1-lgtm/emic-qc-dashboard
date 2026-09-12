@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# ================= 1. CẤU HÌNH GIAO DIỆN & CSS CHUẨN DESKTOP =================
+# ================= 1. CẤU HÌNH TRANG & CSS SỬA LỖI ĐÓNG KHUNG =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -19,12 +19,12 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Ẩn Header mặc định của Streamlit */
+        /* Ẩn Header mặc định Streamlit */
         header[data-testid="stHeader"] {
             display: none !important;
         }
         
-        /* Tối ưu lề trang kéo sát lên mép trên */
+        /* Tối ưu lề trang kéo sát mép trên */
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
             padding-top: 0.6rem !important;
             padding-bottom: 1rem !important;
@@ -38,7 +38,7 @@ st.markdown(
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* Styling Nút Navigation Tabs CĂN GIỮA ĐỈNH TRANG (Giống hệt ảnh gốc) */
+        /* Nút Navigation Tabs căn giữa đỉnh trang */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: center !important;
             gap: 8px !important;
@@ -47,7 +47,7 @@ st.markdown(
             border-bottom: 1px solid #E2E8F0 !important;
         }
         .stTabs [data-baseweb="tab"] {
-            background-color: #94A3B8 !important; /* Màu xám chưa chọn */
+            background-color: #94A3B8 !important;
             color: #FFFFFF !important;
             border-radius: 6px !important;
             padding: 6px 18px !important;
@@ -56,21 +56,20 @@ st.markdown(
             font-size: 13px !important;
         }
         .stTabs [aria-selected="true"] {
-            background-color: #3B82F6 !important; /* Màu xanh lá/dương khi chọn */
+            background-color: #3B82F6 !important;
             color: #FFFFFF !important;
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
         }
         
-        /* Styling Khung Card bao quanh biểu đồ */
-        div[data-testid="stColumn"] {
+        /* SỬA LỖI: Chỉ đóng khung Card cho CỘT CHÍNH, KHÔNG đóng khung cho cột phụ bên trong */
+        div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
             background-color: #FFFFFF;
             border-radius: 10px;
             border: 1px solid #CBD5E1;
-            padding: 10px 12px !important;
+            padding: 12px 14px !important;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
         
-        /* Sidebar styling */
         section[data-testid="stSidebar"] {
             background-color: #FFFFFF;
             border-right: 1px solid #E2E8F0;
@@ -80,7 +79,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Cấu hình Matplotlib Sắc Nét HD & Font hệ thống
+# Cấu hình Matplotlib Sắc Nét HD
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [
     "DejaVu Sans",
@@ -93,12 +92,11 @@ plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["axes.edgecolor"] = "#CBD5E1"
 plt.rcParams["axes.linewidth"] = 0.8
 
-# Bảng màu sắc chuẩn gốc
-COLOR_SUCCESS = "#10B981"  # Đạt / Hoàn thành (Xanh lá)
-COLOR_PRIMARY = "#3B82F6"  # Lệnh / Hàng về (Xanh dương)
-COLOR_DANGER = "#EF4444"  # Lỗi / Bị Block / Trả lại (Đỏ)
-COLOR_WARNING = "#F59E0B"  # Đặc nhượng / Chưa xong (Cam)
-COLOR_PURPLE = "#A855F7"  # Mẫu kiểm (Tím)
+COLOR_SUCCESS = "#10B981"
+COLOR_PRIMARY = "#3B82F6"
+COLOR_DANGER = "#EF4444"
+COLOR_WARNING = "#F59E0B"
+COLOR_PURPLE = "#A855F7"
 
 DISTINCT_COLORS = [
     "#3B82F6",
@@ -169,13 +167,13 @@ with col_den:
   den_date = st.date_input("Đến ngày", date.today())
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", use_container_width=True):
+if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", width="stretch"):
   st.cache_data.clear()
   st.rerun()
 
 df_qa32, df_coois = load_data(tu_date, den_date)
 
-# ================= 3. CĂN GIỮA BỘ NÚT NAVIGATION TABS Ở ĐỈNH TRANG =================
+# ================= 3. BỘ NÚT NAVIGATION TABS =================
 tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
     "📋 Báo Cáo Vật Tư",
     "⚙️ Báo Cáo Cơ Khí",
@@ -183,7 +181,7 @@ tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
     "⚡ Báo Cáo Công Tơ",
 ])
 
-# ================= 4. TAB 1: BÁO CÁO VẬT TƯ (ẢNH 1) =================
+# ================= 4. TAB 1: BÁO CÁO VẬT TƯ =================
 with tab_vat_tu:
   if df_qa32.empty:
     st.info("💡 Chưa có dữ liệu QA32 trong khoảng thời gian đã chọn.")
@@ -308,11 +306,10 @@ with tab_vat_tu:
         top_block_dict[key]["ca_block"] += ca_val
         top_block_dict[key]["ft_total"] += ft_val
 
-    # HÀNG 1: [LỆNH KIỂM KIỂM VẬT TƯ (CỘT RỘNG 1.8)] & [TỶ LỆ BLOCK (CỘT NHỎ 1.0)]
-    col1, col2 = st.columns([1.8, 1.0])
+    col1, col2 = st.columns([2.2, 1.0])
 
     with col1:
-      fig1 = plt.figure(figsize=(9.2, 3.4), dpi=150)
+      fig1 = plt.figure(figsize=(8.5, 3.2), dpi=150)
       fig1.patch.set_facecolor(Theme.SURFACE)
 
       ax1 = fig1.add_subplot(111)
@@ -410,12 +407,12 @@ with tab_vat_tu:
       ax1.set_title(
           "BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
           fontweight="bold",
-          fontsize=10,
+          fontsize=9.5,
           color=Theme.TEXT_PRIMARY,
           pad=10,
       )
 
-      all_handles = [b_ud01, b_ud02, b_ud03, line_ft[0], line_by[0]]
+      all_handles = [b_ud01, b_ud02, b_ud03, line_by[0], line_ft[0]]
       all_labels = [
           "UD 01 (Đạt)",
           "UD 02 (Đặc nhượng)",
@@ -436,13 +433,16 @@ with tab_vat_tu:
       fig1.subplots_adjust(
           top=0.88, bottom=0.22, left=0.08, right=0.92, wspace=0.18
       )
-      st.pyplot(fig1, use_container_width=True)
+      st.pyplot(fig1, width="stretch")
 
     with col2:
-      fig_pie = plt.figure(figsize=(4.5, 3.4), dpi=150)
+      fig_pie = plt.figure(figsize=(3.5, 3.2), dpi=150)
       fig_pie.patch.set_facecolor(Theme.SURFACE)
       ax_pie = fig_pie.add_subplot(111)
       ax_pie.set_facecolor(Theme.SURFACE)
+
+      # KHÓA TỶ LỆ TRÒN TUYỆT ĐỐI (KHÔNG CHO PHỒNG TO MÉO HÌNH)
+      ax_pie.set_aspect("equal")
 
       ok_cnt = max(0.0, total_ft_all - total_ca_block)
       if total_ft_all > 0:
@@ -455,11 +455,10 @@ with tab_vat_tu:
             colors=[COLOR_SUCCESS, COLOR_DANGER],
             autopct="%1.1f%%",
             startangle=140,
-            pctdistance=0.68,
-            labeldistance=1.15,
-            radius=0.92,
-            center=(0, -0.05),
-            wedgeprops=dict(width=0.38, edgecolor="white", linewidth=2),
+            pctdistance=0.65,
+            labeldistance=1.18,
+            radius=0.82,
+            wedgeprops=dict(width=0.35, edgecolor="white", linewidth=2),
         )
         texts[0].set_color(COLOR_SUCCESS)
         texts[0].set_fontweight("bold")
@@ -474,27 +473,27 @@ with tab_vat_tu:
 
         ax_pie.text(
             0,
-            -0.05,
+            0,
             f"TỔNG VẬT TƯ VỀ\n{total_ft_all:,.0f}",
             ha="center",
             va="center",
             fontweight="bold",
-            fontsize=8.5,
+            fontsize=8,
             color=Theme.TEXT_PRIMARY,
         )
       else:
-        ax_pie.text(0, -0.05, "Chưa có dữ liệu", ha="center", fontsize=8.5)
+        ax_pie.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8)
         ax_pie.axis("off")
 
       ax_pie.set_title(
           "TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
           fontweight="bold",
-          fontsize=10,
+          fontsize=9.5,
           color=Theme.TEXT_PRIMARY,
           pad=10,
       )
       fig_pie.subplots_adjust(top=0.88, bottom=0.10, left=0.08, right=0.92)
-      st.pyplot(fig_pie, use_container_width=True)
+      st.pyplot(fig_pie, width="stretch")
 
     st.markdown("---")
     st.markdown(
@@ -528,12 +527,12 @@ with tab_vat_tu:
           "Số Lượt UD 03",
           "Tổng SL Block (CA) / SL Về",
       ]
-      st.dataframe(df_block, use_container_width=True, hide_index=True)
+      st.dataframe(df_block, width="stretch", hide_index=True)
     else:
       st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03")
 
 
-# ================= 5. HÀM CHUNG CHO CÁC TAB COOIS (ẢNH 2) =================
+# ================= 5. HÀM CHUNG CHO CÁC TAB COOIS =================
 def render_coois_tab_layout(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -575,11 +574,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
   title_clean = clean_emoji(title_text)
 
-  # HÀNG 1: [TOP LEFT - TIẾN ĐỘ SẢN XUẤT 65%] & [TOP RIGHT - DONUT TỔNG QUAN 35%]
-  col1, col2 = st.columns([1.85, 1.0])
+  # HÀNG 1: [TOP LEFT - TIẾN ĐỘ SẢN XUẤT 68%] & [TOP RIGHT - DONUT TỔNG QUAN 32%]
+  col1, col2 = st.columns([2.2, 1.0])
 
   with col1:
-    fig1, ax1 = plt.subplots(figsize=(8.5, 3.2), dpi=150)
+    fig1, ax1 = plt.subplots(figsize=(7.5, 3.2), dpi=150)
     fig1.patch.set_facecolor(Theme.SURFACE)
     ax1.set_facecolor(Theme.SURFACE)
     ax2 = ax1.twinx()
@@ -681,12 +680,15 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig1.subplots_adjust(top=0.88, bottom=0.22, left=0.10, right=0.90)
-    st.pyplot(fig1, use_container_width=True)
+    st.pyplot(fig1, width="stretch")
 
   with col2:
-    fig2, ax3 = plt.subplots(figsize=(4.2, 3.2), dpi=150)
+    fig2, ax3 = plt.subplots(figsize=(3.5, 3.2), dpi=150)
     fig2.patch.set_facecolor(Theme.SURFACE)
     ax3.set_facecolor(Theme.SURFACE)
+
+    # KHÓA TỶ LỆ TRÒN TUYỆT ĐỐI (CHỐNG MÉO HÌNH VÀ PHỒNG TO)
+    ax3.set_aspect("equal")
 
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
     pct_deliv = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0
@@ -703,8 +705,8 @@ def render_coois_tab_layout(phan_he_code, title_text):
           startangle=140,
           pctdistance=0.6,
           labeldistance=1.18,
-          radius=0.78,
-          wedgeprops=dict(width=0.32, edgecolor="white", linewidth=2),
+          radius=0.82,
+          wedgeprops=dict(width=0.35, edgecolor="white", linewidth=2),
       )
       texts[0].set_color(COLOR_SUCCESS)
       texts[0].set_fontweight("bold")
@@ -721,11 +723,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
           ha="center",
           va="center",
           fontweight="bold",
-          fontsize=8.5,
+          fontsize=8,
           color=Theme.TEXT_PRIMARY,
       )
     else:
-      ax3.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8.5)
+      ax3.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8)
       ax3.axis("off")
 
     ax3.set_title(
@@ -736,9 +738,9 @@ def render_coois_tab_layout(phan_he_code, title_text):
         pad=10,
     )
     fig2.subplots_adjust(top=0.88, bottom=0.10, left=0.10, right=0.90)
-    st.pyplot(fig2, use_container_width=True)
+    st.pyplot(fig2, width="stretch")
 
-  # HÀNG 2: [CÂN BẰNG 50% - 50%] GIỮA DÒNG SP VÀ CÁC MÃ ĐẦU 5
+  # HÀNG 2: [CÂN BẰNG 50% - 50%]
   st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
 
   col3, col4 = st.columns([1, 1])
@@ -770,13 +772,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
-  # --- DƯỚI TRÁI: BỘ LỌC DÒNG SP ĐẶT TRÊN BIỂU ĐỒ ---
+  # --- DƯỚI TRÁI: KHÔNG DÙNG COLUMNS CON ĐỂ TRÁNH TẠO Ô TRẮNG THỪA ---
   with col3:
-    col_sel, _ = st.columns([1.5, 1])
-    with col_sel:
-      sel_fam = st.selectbox(
-          "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
-      )
+    sel_fam = st.selectbox(
+        "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
+    )
 
     m3_qty = [0.0] * 12
     if not sub_5.empty:
@@ -796,7 +796,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
     defect_rate_m = [0.0] * 12
 
-    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.6), dpi=150)
     fig3.patch.set_facecolor(Theme.SURFACE)
     ax_b3.set_facecolor(Theme.SURFACE)
 
@@ -857,16 +857,16 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig3.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
-    st.pyplot(fig3, use_container_width=True)
+    st.pyplot(fig3, width="stretch")
 
   # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5 ---
   with col4:
-    # Khoảng trống giả để căn bằng hàng đỉnh với Selectbox bên trái
+    # Căn lề trống vừa đúng với chiều cao Selectbox bên trái
     st.markdown(
-        "<div style='height: 42px;'></div>", unsafe_allow_html=True
+        "<div style='height: 40px;'></div>", unsafe_allow_html=True
     )
 
-    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.6), dpi=150)
     fig4.patch.set_facecolor(Theme.SURFACE)
     ax_b4.set_facecolor(Theme.SURFACE)
 
