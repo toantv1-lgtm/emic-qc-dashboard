@@ -217,7 +217,6 @@ def generate_print_ready_excel(
   align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
   align_right = Alignment(horizontal="right", vertical="center", wrap_text=True)
 
-  # Danh sách từng báo cáo đính kèm từng biểu đồ tương ứng
   sheets_data = [
       (
           "TienDo_Thang",
@@ -252,7 +251,6 @@ def generate_print_ready_excel(
     ws.page_setup.fitToHeight = 0
     ws.sheet_properties.pageSetUpPr.fitToPage = True
 
-    # Header Thông tin công ty
     ws["A1"] = "TỔNG CÔNG TY THIẾT BỊ ĐIỆN EMIC - PHÒNG QUẢN LÝ CHẤT LƯỢNG (QC)"
     ws["A1"].font = font_company
 
@@ -316,7 +314,6 @@ def generate_print_ready_excel(
           max_len = max(max_len, len(str(cell.value)))
       ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
-    # ĐÍNH KÈM TRỰC TIẾP BIỂU ĐỒ TƯƠNG ỨNG VÀO BÊN CẠNH BẢNG
     if fig_obj is not None:
       buf = io.BytesIO()
       fig_obj.savefig(
@@ -330,7 +327,7 @@ def generate_print_ready_excel(
   return output.getvalue()
 
 
-# ================= 3. SIDEBAR BỘ LỌC NGÀY NỔI BẬT =================
+# ================= 3. SIDEBAR BỘ LỌC NGÀY =================
 st.sidebar.markdown("### 📅 DẢI LỌC THỜI GIAN BÁO CÁO")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
@@ -451,7 +448,16 @@ with tab_vat_tu:
           or ca_val > 0
           or (st_clean and not is_ud01 and not is_uninspected)
       ):
-        key = (ma_vt_str, ncc_str)
+        if "VIHA" in ncc_str.upper():
+          key = (
+              "Mặt số công tơ",
+              ncc_str if ncc_str else "Cty TNHH CN VIHA",
+          )
+          ma_display, ten_display = "Mặt số công tơ", "Mặt số công tơ"
+        else:
+          key = (ma_vt_str, ncc_str)
+          ma_display, ten_display = ma_vt_str, ten_vt_str
+
         if key not in top_block_dict:
           top_block_dict[key] = {
               "ma_vt": ma_display,
@@ -930,6 +936,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
+  # Ô Lọc Dòng SP Đặt Trực Tiếp (Triệt Tiêu Ô Trắng Thừa)
   sel_fam = st.selectbox(
       "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
   )
