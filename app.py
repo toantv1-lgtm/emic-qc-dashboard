@@ -788,15 +788,21 @@ with tab_vat_tu:
       )
       fig1.update_yaxes(
           title_text="← Số Lượng Lệnh",
+          title_font=dict(size=12, color=COLOR_PRIMARY),
           tickformat=",d",
+          tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
           secondary_y=False,
           showgrid=True,
-          gridcolor="#F1F5F9",
+          gridcolor=PLOTLY_GRID,
+          zeroline=False,
       )
       fig1.update_yaxes(
-          title_text="Vật Tư / Mẫu [Log] →",
+          title_text="Vật Tư / Mẫu (Log) →",
+          title_font=dict(size=12, color=COLOR_PURPLE),
           type="log",
-          tickformat=",d",
+          dtick=1,
+          tickformat="~s",
+          tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
           secondary_y=True,
           showgrid=False,
       )
@@ -994,6 +1000,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     if sl_h < sl_t:
       m_uncomp_orders[m_idx] += 1
 
+  m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
   title_clean = clean_emoji(title_text)
 
   rem_qty_kpi = max(0.0, tot_qty_all - deliv_qty_all)
@@ -1047,40 +1054,17 @@ def render_coois_tab_layout(phan_he_code, title_text):
   col1, col2 = st.columns([2.1, 1.0])
 
   with col1:
-    chart_card_open(f"Tiến Độ Sản Xuất — {title_clean}", "Theo tháng")
+    chart_card_open(f"Sản Lượng & Tỷ Lệ Hoàn Thành — {title_clean}", "Theo tháng")
     fig1 = make_subplots(specs=[[{"secondary_y": True}]])
-    m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
 
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_comp_orders,
-            name="Lệnh Hoàn Thành",
-            marker_color=COLOR_PRIMARY,
-            offsetgroup=1,
-        ),
-        secondary_y=False,
-    )
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_uncomp_orders,
-            name="Lệnh Chưa Xong",
-            marker_color=COLOR_DANGER,
-            offsetgroup=1,
-            base=m_comp_orders,
-        ),
-        secondary_y=False,
-    )
     fig1.add_trace(
         go.Bar(
             x=months_labels,
             y=m_comp_qty,
             name="SL Hoàn Thành",
             marker_color=COLOR_SUCCESS,
-            offsetgroup=2,
         ),
-        secondary_y=True,
+        secondary_y=False,
     )
     fig1.add_trace(
         go.Bar(
@@ -1088,32 +1072,32 @@ def render_coois_tab_layout(phan_he_code, title_text):
             y=m_uncomp_qty,
             name="SL Chưa Xong",
             marker_color=COLOR_WARNING,
-            offsetgroup=2,
             base=m_comp_qty,
+        ),
+        secondary_y=False,
+    )
+    pct_hoanthanh_m = [
+        (m_comp_qty[i] / (m_comp_qty[i] + m_uncomp_qty[i]) * 100.0)
+        if (m_comp_qty[i] + m_uncomp_qty[i]) > 0
+        else None
+        for i in range(12)
+    ]
+    fig1.add_trace(
+        go.Scatter(
+            x=months_labels,
+            y=pct_hoanthanh_m,
+            name="% Hoàn Thành",
+            mode="lines+markers",
+            line=dict(color=COLOR_PRIMARY, width=2.5),
+            marker=dict(size=6, color=COLOR_PRIMARY),
+            connectgaps=False,
         ),
         secondary_y=True,
     )
 
-    # Hiển thị chú thích % trên cột
-    for i in range(12):
-      t_qty = m_comp_qty[i] + m_uncomp_qty[i]
-      pct = (m_comp_qty[i] / t_qty * 100) if t_qty > 0 else 0
-      if t_qty > 0:
-        fig1.add_annotation(
-            x=months_labels[i],
-            y=t_qty * 1.05,
-            text=f"<b>{pct:.0f}%</b>",
-            showarrow=False,
-            font=dict(
-                color=COLOR_SUCCESS, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"
-            ),
-            yref="y2",
-            xshift=14,
-        )
-
     fig1.update_layout(
-        barmode="group",
-        bargap=0.3,
+        barmode="stack",
+        bargap=0.35,
         margin=dict(l=30, r=20, t=8, b=55),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
@@ -1131,18 +1115,22 @@ def render_coois_tab_layout(phan_he_code, title_text):
         showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig1.update_yaxes(
-        title_text="← Tổng Lệnh",
-        tickformat=",d",
-        title_font=dict(size=12, color=COLOR_PRIMARY),
+        title_text="← Sản Lượng",
+        title_font=dict(size=12, color=COLOR_SUCCESS),
+        tickformat="~s",
+        tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
         secondary_y=False,
         showgrid=True,
-        gridcolor="#F1F5F9",
+        gridcolor=PLOTLY_GRID,
+        zeroline=False,
     )
     fig1.update_yaxes(
-        title_text="Số Lượng Giao [Log] →",
-        tickformat=",d",
-        title_font=dict(size=12, color=COLOR_SUCCESS),
-        type="log",
+        title_text="% Hoàn Thành →",
+        title_font=dict(size=12, color=COLOR_PRIMARY),
+        tickformat=".0f",
+        ticksuffix="%",
+        range=[0, 105],
+        tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
         secondary_y=True,
         showgrid=False,
     )
@@ -1259,9 +1247,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         if pd.notna(m_val) and 1 <= int(m_val) <= 12:
           m3_qty[int(m_val) - 1] += float(r["sl_ht"])
 
-    defect_rate_m = [0.0] * 12  # Mẫu Tỷ lệ sai hỏng %
-
-    fig3 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig3 = go.Figure()
     fig3.add_trace(
         go.Bar(
             x=months_labels,
@@ -1271,21 +1257,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             text=[f"{int(v):,}" if v > 0 else "" for v in m3_qty],
             textposition="outside",
             textfont=dict(color=COLOR_PRIMARY, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
-        ),
-        secondary_y=False,
-    )
-
-    # KHÔI PHỤC ĐƯỜNG TỶ LỆ SAI HỎNG (MÀU ĐỎ)
-    fig3.add_trace(
-        go.Scatter(
-            x=months_labels,
-            y=defect_rate_m,
-            name="Tỷ lệ sai hỏng (%)",
-            mode="lines+markers",
-            line=dict(color=COLOR_DANGER, width=2),
-            marker=dict(size=6),
-        ),
-        secondary_y=True,
+        )
     )
 
     fig3.update_layout(
@@ -1300,20 +1272,14 @@ def render_coois_tab_layout(phan_he_code, title_text):
         showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig3.update_yaxes(
-        title_text="SL Hoàn Thành [Log]",
-        tickformat=",d",
+        title_text="SL Hoàn Thành",
         title_font=dict(size=12, color=COLOR_PRIMARY),
-        type="log",
-        secondary_y=False,
+        tickformat="~s",
+        tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
         showgrid=True,
-        gridcolor="#F1F5F9",
-    )
-    fig3.update_yaxes(
-        title_text="Sai Hỏng (%)",
-        title_font=dict(size=12, color=COLOR_DANGER),
-        range=[-1, 5],
-        secondary_y=True,
-        showgrid=False,
+        gridcolor=PLOTLY_GRID,
+        zeroline=False,
+        rangemode="tozero",
     )
 
     st.plotly_chart(
@@ -1346,12 +1312,16 @@ def render_coois_tab_layout(phan_he_code, title_text):
     else:
       fams_x, deliv_fams = ["Không có SP"], [0.0]
 
-    defect_fams = [0.0] * len(fams_x)
+    if len(fams_x) > 1:
+      pairs = sorted(zip(fams_x, deliv_fams), key=lambda p: p[1], reverse=True)
+      fams_x = [p[0] for p in pairs]
+      deliv_fams = [p[1] for p in pairs]
+
     bar_colors = [
         DISTINCT_COLORS[i % len(DISTINCT_COLORS)] for i in range(len(fams_x))
     ]
 
-    fig4 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig4 = go.Figure()
     fig4.add_trace(
         go.Bar(
             x=fams_x,
@@ -1360,21 +1330,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             text=[f"{int(v):,}" if v > 0 else "" for v in deliv_fams],
             textposition="outside",
             textfont=dict(color=bar_colors, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
-        ),
-        secondary_y=False,
-    )
-
-    # KHÔI PHỤC ĐƯỜNG TỶ LỆ SAI HỎNG (MÀU ĐỎ)
-    fig4.add_trace(
-        go.Scatter(
-            x=fams_x,
-            y=defect_fams,
-            name="Tỷ lệ sai hỏng (%)",
-            mode="lines+markers",
-            line=dict(color=COLOR_DANGER, width=2),
-            marker=dict(symbol="square", size=6),
-        ),
-        secondary_y=True,
+        )
     )
 
     fig4.update_layout(
@@ -1389,20 +1345,14 @@ def render_coois_tab_layout(phan_he_code, title_text):
         showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig4.update_yaxes(
-        title_text="Số Lượng SP [Log]",
-        tickformat=",d",
+        title_text="Số Lượng SP",
         title_font=dict(size=12, color=COLOR_SUCCESS),
-        type="log",
-        secondary_y=False,
+        tickformat="~s",
+        tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
         showgrid=True,
-        gridcolor="#F1F5F9",
-    )
-    fig4.update_yaxes(
-        title_text="Sai Hỏng (%)",
-        title_font=dict(size=12, color=COLOR_DANGER),
-        range=[-1, 5],
-        secondary_y=True,
-        showgrid=False,
+        gridcolor=PLOTLY_GRID,
+        zeroline=False,
+        rangemode="tozero",
     )
 
     st.plotly_chart(
