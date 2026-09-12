@@ -13,9 +13,9 @@ from openpyxl.utils import get_column_letter
 import pandas as pd
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD & BỘ STYLE CSS CHUẨN DESKTOP =================
+# ================= 1. CẤU HÌNH DASHBOARD & CSS =================
 st.set_page_config(
-    page_title="EMIC QC Dashboard",
+    page_title="EMIC QC Dashboard Pro",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -27,8 +27,8 @@ st.markdown(
         header[data-testid="stHeader"] { display: none !important; }
         
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 0.3rem !important;
-            padding-bottom: 0.3rem !important;
+            padding-top: 0.2rem !important;
+            padding-bottom: 0.2rem !important;
             padding-left: 0.8rem !important;
             padding-right: 0.8rem !important;
             max-width: 100% !important;
@@ -39,7 +39,7 @@ st.markdown(
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* Styling Tabs Navigation Căn Giữa Đỉnh Trang */
+        /* Tabs Navigation Căn Giữa Đỉnh Trang */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: center !important;
             gap: 8px !important;
@@ -62,7 +62,7 @@ st.markdown(
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
         }
         
-        /* Card Khung Bao Cho Từng Biểu Đồ (Khắc Phục Ô Trắng Thừa) */
+        /* Khung Card Bao Quanh Biểu Đồ */
         .chart-card {
             background-color: #FFFFFF;
             border-radius: 10px;
@@ -85,7 +85,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Cấu hình Matplotlib Sắc Nét HD
+# Cấu hình Matplotlib Siêu Gọn & HD
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [
     "DejaVu Sans",
@@ -99,12 +99,11 @@ plt.rcParams["axes.edgecolor"] = "#CBD5E1"
 plt.rcParams["axes.linewidth"] = 0.8
 
 # Bảng Màu Chuẩn Nguyên Bản 100%
-COLOR_SUCCESS = "#10B981"  # Xanh lá (UD01 / SL Hoàn thành / Đạt)
-COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh Hoàn Thành / FT)
-COLOR_DANGER = "#EF4444"  # Đỏ (UD03 / Block / Lệnh chưa xong)
+COLOR_SUCCESS = "#10B981"  # Xanh lá (UD01 / SL Hoàn thành)
+COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh HT / Hàng về FT)
+COLOR_DANGER = "#EF4444"  # Đỏ (UD03 / Bị Block / Lệnh chưa xong)
 COLOR_WARNING = "#F59E0B"  # Cam (UD02 / SL chưa xong)
-COLOR_PURPLE = "#A855F7"  # Tím (BY Sample / PT)
-COLOR_CYAN = "#06B6D4"  # Cyan (VT)
+COLOR_PURPLE = "#A855F7"  # Tím (BY Sample)
 
 DISTINCT_COLORS = [
     "#3B82F6",
@@ -166,7 +165,7 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= 2. HÀM TẠO FILE EXCEL CHUẨN IN ẤN TRÌNH BÀY CHUYÊN NGHIỆP =================
+# ================= 2. HÀM TẠO EXCEL ĐÍNH KÈM TỪNG BIỂU ĐỒ VÀO TỪNG SHEET =================
 def generate_print_ready_excel(
     phan_he_code,
     title_clean,
@@ -218,14 +217,33 @@ def generate_print_ready_excel(
   align_left = Alignment(horizontal="left", vertical="center", wrap_text=True)
   align_right = Alignment(horizontal="right", vertical="center", wrap_text=True)
 
+  # Danh sách từng báo cáo đính kèm từng biểu đồ tương ứng
   sheets_data = [
-      ("TienDo_Thang", "1. TIẾN ĐỘ SẢN XUẤT THEO THÁNG", df_monthly),
-      ("TongQuan_KeHoach", "2. TỔNG QUAN CHỈ TIÊU KẾ HOẠCH", df_plan),
-      ("Dong_SanPham", "3. CHI TIẾT THEO DÒNG SẢN PHẨM", df_family),
-      ("SanLuong_CaNam", "4. TỔNG SẢN LƯỢNG CẢ NĂM MÃ ĐẦU 5", df_year),
+      (
+          "TienDo_Thang",
+          "1. TIẾN ĐỘ SẢN XUẤT THEO THÁNG",
+          df_monthly,
+          fig1_mpl,
+          "I7",
+      ),
+      (
+          "TongQuan_KeHoach",
+          "2. TỔNG QUAN CHỈ TIÊU KẾ HOẠCH",
+          df_plan,
+          fig2_mpl,
+          "E7",
+      ),
+      ("Dong_SanPham", "3. CHI TIẾT THEO DÒNG SẢN PHẨM", df_family, fig3_mpl, "D7"),
+      (
+          "SanLuong_CaNam",
+          "4. TỔNG SẢN LƯỢNG CẢ NĂM MÃ ĐẦU 5",
+          df_year,
+          fig4_mpl,
+          "D7",
+      ),
   ]
 
-  for sheet_name, section_title, df_table in sheets_data:
+  for sheet_name, section_title, df_table, fig_obj, img_pos in sheets_data:
     ws = wb.create_sheet(title=sheet_name)
     ws.views.sheetView[0].showGridLines = True
     ws.page_setup.orientation = ws.ORIENTATION_LANDSCAPE
@@ -234,6 +252,7 @@ def generate_print_ready_excel(
     ws.page_setup.fitToHeight = 0
     ws.sheet_properties.pageSetUpPr.fitToPage = True
 
+    # Header Thông tin công ty
     ws["A1"] = "TỔNG CÔNG TY THIẾT BỊ ĐIỆN EMIC - PHÒNG QUẢN LÝ CHẤT LƯỢNG (QC)"
     ws["A1"].font = font_company
 
@@ -297,39 +316,27 @@ def generate_print_ready_excel(
           max_len = max(max_len, len(str(cell.value)))
       ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
 
-  # Sheet Đính Kèm Hình Ảnh Biểu Đồ
-  ws_img = wb.create_sheet(title="BieuDo_Visual")
-  ws_img.views.sheetView[0].showGridLines = True
-  ws_img["A1"] = "HÌNH ẢNH CÁC BIỂU ĐỒ BÁO CÁO CÂN ĐỐI"
-  ws_img["A1"].font = font_title
-
-  mpl_figs = [
-      (fig1_mpl, "B3"),
-      (fig2_mpl, "K3"),
-      (fig3_mpl, "B22"),
-      (fig4_mpl, "K22"),
-  ]
-  for f_mpl, cell_pos in mpl_figs:
-    if f_mpl is not None:
+    # ĐÍNH KÈM TRỰC TIẾP BIỂU ĐỒ TƯƠNG ỨNG VÀO BÊN CẠNH BẢNG
+    if fig_obj is not None:
       buf = io.BytesIO()
-      f_mpl.savefig(
+      fig_obj.savefig(
           buf, format="png", dpi=200, bbox_inches="tight", facecolor="#FFFFFF"
       )
       buf.seek(0)
       img = OpenpyxlImage(buf)
-      ws_img.add_image(img, cell_pos)
+      ws.add_image(img, img_pos)
 
   wb.save(output)
   return output.getvalue()
 
 
-# ================= 3. SIDEBAR BỘ LỌC NGÀY =================
-st.sidebar.title("🎛️ BỘ LỌC DỮ LIỆU")
+# ================= 3. SIDEBAR BỘ LỌC NGÀY NỔI BẬT =================
+st.sidebar.markdown("### 📅 DẢI LỌC THỜI GIAN BÁO CÁO")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
-  tu_date = st.date_input("Từ ngày", date(datetime.now().year, 1, 1))
+  tu_date = st.date_input("Từ ngày:", date(datetime.now().year, 1, 1))
 with col_den:
-  den_date = st.date_input("Đến ngày", date.today())
+  den_date = st.date_input("Đến ngày:", date.today())
 
 st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Cập Nhật Dữ Liệu", use_container_width=True):
@@ -447,9 +454,9 @@ with tab_vat_tu:
         key = (ma_vt_str, ncc_str)
         if key not in top_block_dict:
           top_block_dict[key] = {
-              "ma_vt": ma_vt_str,
-              "ten_vt": ten_vt_str,
-              "ncc": ncc_str,
+              "ma_vt": ma_display,
+              "ten_vt": ten_display,
+              "ncc": key[1],
               "ud02": 0,
               "ud03": 0,
               "ca_block": 0.0,
@@ -466,7 +473,7 @@ with tab_vat_tu:
 
     with col1:
       st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-      fig1 = plt.figure(figsize=(8.2, 3.2), dpi=200)
+      fig1 = plt.figure(figsize=(8.2, 3.1), dpi=200)
       fig1.patch.set_facecolor(Theme.SURFACE)
 
       ax1 = fig1.add_subplot(111)
@@ -595,7 +602,7 @@ with tab_vat_tu:
 
     with col2:
       st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-      fig_pie = plt.figure(figsize=(3.8, 3.2), dpi=200)
+      fig_pie = plt.figure(figsize=(3.8, 3.1), dpi=200)
       fig_pie.patch.set_facecolor(Theme.SURFACE)
       ax_pie = fig_pie.add_subplot(111)
       ax_pie.set_facecolor(Theme.SURFACE)
@@ -619,7 +626,7 @@ with tab_vat_tu:
             startangle=140,
             pctdistance=0.6,
             labeldistance=1.18,
-            radius=0.82,
+            radius=0.85,
             wedgeprops=dict(width=0.35, edgecolor="white", linewidth=2),
         )
         texts[0].set_color(COLOR_SUCCESS)
@@ -684,7 +691,7 @@ with tab_vat_tu:
       st.dataframe(df_block, use_container_width=True, hide_index=True)
 
 
-# ================= 6. HÀM CHUNG BÁO CÁO COOIS (QUY CHUẨN CHIỀU CAO BẰNG CHẰN CHẶN) =================
+# ================= 6. HÀM CHUNG BÁO CÁO COOIS (QUY CHUẨN CHIỀU CAO 3.1 INCHES BẰNG ĐỒ THỊ QUẠT) =================
 def render_coois_tab_layout(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -726,7 +733,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
   title_clean = clean_emoji(title_text)
 
-  # HÀNG 1: TIẾN ĐỘ SẢN XUẤT (2.1) & DONUT CHART (1.0) - CÙNG FIGSIZE (..., 3.1)
+  # HÀNG 1: TIẾN ĐỘ SẢN XUẤT (2.1) & DONUT CHART (1.0) - ĐỒNG BỘ FIGSIZE (..., 3.1)
   col1, col2 = st.columns([2.1, 1.0])
 
   with col1:
@@ -842,7 +849,6 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig2.patch.set_facecolor(Theme.SURFACE)
     ax3.set_facecolor(Theme.SURFACE)
 
-    # KHÓA TỶ LỆ TRÒN NATIVE 1:1 CHỐNG MÉO
     ax3.set_aspect("equal")
 
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
@@ -896,7 +902,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.pyplot(fig2, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-  # HÀNG 2: BỘ LỌC ĐẶT NGOÀI & 2 ĐỒ THỊ BÊN DƯỚI THẲNG HÀNG 100%
+  # HÀNG 2: BỘ LỌC ĐẶT NGOÀI & 2 ĐỒ THỊ BÊN DƯỚI THẲNG HÀNG 100% (CÙNG FIGSIZE 3.1 INCHES)
   sub_5 = (
       df_sub[
           df_sub["ma_tp"]
@@ -924,7 +930,6 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
-  # Ô Lọc Dòng SP Đặt Trực Tiếp (Triệt Tiêu Ô Trắng Thừa)
   sel_fam = st.selectbox(
       "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
   )
@@ -952,7 +957,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
     defect_rate_m = [0.0] * 12
 
-    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.7), dpi=200)
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 3.1), dpi=200)
     fig3.patch.set_facecolor(Theme.SURFACE)
     ax_b3.set_facecolor(Theme.SURFACE)
 
@@ -1019,7 +1024,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
   # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5 ---
   with col4:
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.7), dpi=200)
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 3.1), dpi=200)
     fig4.patch.set_facecolor(Theme.SURFACE)
     ax_b4.set_facecolor(Theme.SURFACE)
 
@@ -1112,7 +1117,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.pyplot(fig4, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-  # ================= 7. BẢNG SỐ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL IN A4 =================
+  # ================= 7. BẢNG SỐ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL IN A4 ĐÍNH KÈM TỪNG BIỂU ĐỒ =================
   st.markdown("---")
 
   pct_orders_m = [
