@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD & PHÔNG CHỮ CALIBRI =================
+# ================= 1. CẤU HÌNH DASHBOARD & GIAO DIỆN CHUYÊN NGHIỆP (FULL-WIDTH) =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -27,73 +27,122 @@ st.markdown(
     """
     <style>
         header[data-testid="stHeader"] { display: none !important; }
-        
-        /* Cấu hình phông chữ Calibri toàn bộ ứng dụng */
+
         html, body, [class*="css"], .stApp {
-            font-family: 'Calibri', 'Segoe UI', sans-serif !important;
-            background-color: #F8FAFC;
+            font-family: 'Segoe UI', Calibri, Arial, sans-serif !important;
+            background-color: #F8FAFC !important;
         }
 
+        /* Full màn hình, không giới hạn chiều rộng, không bị cắt/che */
+        html, body {
+            overflow-x: hidden;
+            overflow-y: auto !important;
+            height: auto !important;
+        }
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 0.8rem !important;
-            padding-bottom: 1rem !important;
-            padding-left: 1.2rem !important;
-            padding-right: 1.2rem !important;
+            padding-top: 0.9rem !important;
+            padding-bottom: 2rem !important;
+            padding-left: 1.4rem !important;
+            padding-right: 1.4rem !important;
             max-width: 100% !important;
+            width: 100% !important;
+            overflow: visible !important;
+        }
+        [data-testid="stAppViewContainer"], [data-testid="stMain"] {
+            overflow: visible !important;
+            height: auto !important;
         }
 
-        /* Khung Lọc Dữ Liệu Đỉnh Trang */
-        .filter-card {
-            background-color: #FFFFFF;
-            border-radius: 10px;
-            border: 1px solid #CBD5E1;
-            padding: 15px 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            font-family: 'Calibri', sans-serif !important;
+        /* Khung Lọc Dữ Liệu (đặt trong sidebar, thu gọn mặc định để tận dụng full-width) */
+        section[data-testid="stSidebar"] { background-color: #FFFFFF; }
+        .sidebar-heading {
+            font-size: 11px;
+            font-weight: 700;
+            color: #64748B;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            margin: 4px 0 10px 0;
         }
 
-        /* Tabs Navigation Căn Giữa */
+        /* Tabs Navigation - Nút Riêng Lẻ, Bo Tròn, Đổ Bóng, Căn Trái (giống ảnh mẫu) */
         .stTabs [data-baseweb="tab-list"] {
-            justify-content: center !important;
+            justify-content: flex-start !important;
             gap: 10px !important;
             background-color: transparent !important;
-            padding: 5px 0px 15px 0px !important;
-            border-bottom: 2px solid #E2E8F0 !important;
+            padding: 4px 0px 16px 0px !important;
+            border-bottom: none !important;
         }
         .stTabs [data-baseweb="tab"] {
             background-color: #94A3B8 !important;
             color: #FFFFFF !important;
-            border-radius: 6px !important;
-            padding: 8px 24px !important;
+            border-radius: 8px !important;
+            padding: 9px 22px !important;
             border: none !important;
-            font-weight: bold !important;
+            font-weight: 600 !important;
             font-size: 14px !important;
-            font-family: 'Calibri', sans-serif !important;
+            font-family: 'Segoe UI', Calibri, sans-serif !important;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12) !important;
+            transition: all 0.15s ease;
         }
         .stTabs [aria-selected="true"] {
             background-color: #3B82F6 !important;
             color: #FFFFFF !important;
-            box-shadow: 0 4px 6px rgba(59, 130, 246, 0.4) !important;
+            box-shadow: 0 4px 10px rgba(59, 130, 246, 0.4) !important;
         }
-        
+
         /* Card Khung Bao Biểu Đồ */
         .chart-card {
             background-color: #FFFFFF;
-            border-radius: 10px;
-            border: 1px solid #CBD5E1;
-            padding: 10px 15px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
-            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            padding: 12px 16px 6px 16px;
+            box-shadow: 0 2px 6px rgba(15, 23, 42, 0.05);
+            margin-bottom: 14px;
+        }
+
+        .section-heading {
+            font-size: 15px;
+            font-weight: 700;
+            color: #0F172A;
+            margin: 4px 0 12px 2px;
+        }
+
+        /* Bảng dữ liệu */
+        div[data-testid="stDataFrame"] {
+            border: 1px solid #E2E8F0 !important;
+            border-radius: 10px !important;
+            box-shadow: 0 2px 5px rgba(15, 23, 42, 0.04);
+        }
+
+        /* Nút bấm */
+        .stButton button, .stDownloadButton button {
+            border-radius: 8px !important;
+            font-weight: 600 !important;
+            font-family: 'Segoe UI', Calibri, sans-serif !important;
+        }
+        .stButton button[kind="primary"], .stDownloadButton button[kind="primary"] {
+            background-color: #3B82F6 !important;
+            box-shadow: 0 2px 6px rgba(59, 130, 246, 0.35) !important;
         }
 
         div[data-testid="stVerticalBlock"] > div { gap: 0.3rem !important; }
+
+        ::-webkit-scrollbar { width: 9px; height: 9px; }
+        ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Bảng Màu Chuẩn Nguyên Bản 100%
+
+def render_section_heading(text):
+  st.markdown(
+      f'<div class="section-heading">{text}</div>', unsafe_allow_html=True
+  )
+
+
+# Bảng Màu Chuẩn Nguyên Bản (đúng như thiết kế mẫu)
 COLOR_SUCCESS = "#10B981"  # Xanh lá (Đạt / HT)
 COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh / FT)
 COLOR_DANGER = "#EF4444"  # Đỏ (Lỗi / Lệnh Chưa Xong / Sai Hỏng %)
@@ -114,7 +163,9 @@ DISTINCT_COLORS = [
     "#14B8A6",
 ]
 
-# Cấu hình Matplotlib phông Calibri
+PLOTLY_FONT = "Segoe UI, Calibri, sans-serif"
+
+# Cấu hình Matplotlib phông Calibri (dùng riêng cho ảnh chèn Excel - chuẩn in ấn văn phòng)
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = ["Calibri", "Arial", "sans-serif"]
 plt.rcParams["font.size"] = 9
@@ -311,26 +362,27 @@ def generate_print_ready_excel(
   return output.getvalue()
 
 
-# ================= 3. BỘ LỌC NGÀY CHÍNH GIỮA MÀN HÌNH =================
-st.markdown('<div class="filter-card">', unsafe_allow_html=True)
-st.markdown(
-    "<h4 style='text-align: center; color: #0F172A; margin-top: 0; font-family:"
-    " Calibri, sans-serif;'>📅 THIẾT LẬP DẢI THỜI GIAN BÁO CÁO</h4>",
-    unsafe_allow_html=True,
-)
-col_f1, col_f2, col_f3 = st.columns([1.5, 1.5, 1])
-with col_f1:
-  tu_date = st.date_input("Từ ngày:", date(datetime.now().year, 1, 1))
-with col_f2:
-  den_date = st.date_input("Đến ngày:", date.today())
-with col_f3:
-  st.markdown("<div style='height: 28px;'></div>", unsafe_allow_html=True)
-  if st.button("🔄 CẬP NHẬT DỮ LIỆU", use_container_width=True, type="primary"):
+# ================= 3. BỘ LỌC NGÀY (SIDEBAR - THU GỌN MẶC ĐỊNH ĐỂ FULL-WIDTH) =================
+with st.sidebar:
+  st.markdown(
+      '<div class="sidebar-heading">📅 DẢI THỜI GIAN BÁO CÁO</div>',
+      unsafe_allow_html=True,
+  )
+  tu_date = st.date_input("Từ ngày", date(datetime.now().year, 1, 1))
+  den_date = st.date_input("Đến ngày", date.today())
+  if st.button("🔄 Cập nhật dữ liệu", use_container_width=True, type="primary"):
     st.cache_data.clear()
     st.rerun()
-st.markdown("</div>", unsafe_allow_html=True)
 
 df_qa32, df_coois = load_data(tu_date, den_date)
+
+st.markdown(
+    f"<div style='color:#64748B; font-size:12.5px; font-weight:600; margin: 0 0 6px 2px;'>"
+    f"📅 Kỳ báo cáo: {tu_date.strftime('%d/%m/%Y')} — {den_date.strftime('%d/%m/%Y')}"
+    f"&nbsp;&nbsp;·&nbsp;&nbsp;Mở sidebar (góc trên trái) để đổi khoảng ngày</div>",
+    unsafe_allow_html=True,
+)
+
 
 # ================= 4. NAVIGATION TABS =================
 tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
@@ -465,6 +517,14 @@ with tab_vat_tu:
         top_block_dict[key]["ca_block"] += ca_val
         top_block_dict[key]["ft_total"] += ft_val
 
+    total_ud01 = sum(ud01_m)
+    total_ud02 = sum(ud02_m)
+    total_ud03 = sum(ud03_m)
+    total_uninspected = sum(uninspected_m)
+    total_lots = total_ud01 + total_ud02 + total_ud03 + total_uninspected
+    pct_ud01 = (total_ud01 / total_lots * 100) if total_lots > 0 else 0.0
+    total_by_all = sum(by_inspected_m) + sum(by_uninspected_m)
+
     PLOT_HEIGHT = 380
 
     col1, col2 = st.columns([2.1, 1.0])
@@ -522,7 +582,7 @@ with tab_vat_tu:
       fig1.update_layout(
           title=dict(
               text="BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
-              font=dict(size=14, color=COLOR_TEXT, family="Calibri, sans-serif"),
+              font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
               x=0.5,
           ),
           barmode="stack",
@@ -536,11 +596,11 @@ with tab_vat_tu:
               y=-0.22,
               xanchor="center",
               x=0.5,
-              font=dict(size=11, family="Calibri, sans-serif"),
+              font=dict(size=11, family="Segoe UI, Calibri, sans-serif"),
           ),
       )
       fig1.update_xaxes(
-          showgrid=False, tickfont=dict(size=11, family="Calibri, sans-serif")
+          showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
       )
       fig1.update_yaxes(
           title_text="← Số Lượng Lệnh",
@@ -588,7 +648,7 @@ with tab_vat_tu:
                   textposition="outside",
                   textfont=dict(
                       size=12,
-                      family="Calibri, sans-serif",
+                      family="Segoe UI, Calibri, sans-serif",
                       color=[COLOR_SUCCESS, COLOR_DANGER],
                   ),
                   direction="clockwise",
@@ -599,7 +659,7 @@ with tab_vat_tu:
       fig2.update_layout(
           title=dict(
               text="TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
-              font=dict(size=14, color=COLOR_TEXT, family="Calibri, sans-serif"),
+              font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
               x=0.5,
           ),
           margin=dict(l=30, r=30, t=50, b=90),
@@ -616,7 +676,7 @@ with tab_vat_tu:
                   x=0.5,
                   y=0.5,
                   font_size=12,
-                  font_family="Calibri, sans-serif",
+                  font_family="Segoe UI, Calibri, sans-serif",
                   showarrow=False,
               )
           ],
@@ -626,11 +686,12 @@ with tab_vat_tu:
       )
       st.markdown("</div>", unsafe_allow_html=True)
 
-    # KHÔI PHỤC BẢNG DANH SÁCH VẬT TƯ BỊ BLOCK & UD02, UD03
+    # DANH SÁCH VẬT TƯ BỊ BLOCK & UD02, UD03
     st.markdown("---")
     st.markdown(
-        "<h5 style='color:#EF4444; margin-bottom:10px; font-family: Calibri,"
-        " sans-serif;'>🚨 DANH SÁCH VẬT TƯ BỊ BLOCK & UD02, UD03</h5>",
+        "<h5 style='color:#EF4444; margin-bottom:10px; font-family:"
+        " \"Segoe UI\", Calibri, sans-serif;'>🚨 DANH SÁCH VẬT TƯ BỊ BLOCK &"
+        " UD02, UD03</h5>",
         unsafe_allow_html=True,
     )
     sorted_blocks = sorted(
@@ -765,7 +826,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             text=f"<b>{pct:.0f}%</b>",
             showarrow=False,
             font=dict(
-                color=COLOR_SUCCESS, size=11, family="Calibri, sans-serif"
+                color=COLOR_SUCCESS, size=11, family="Segoe UI, Calibri, sans-serif"
             ),
             yref="y2",
             xshift=14,
@@ -775,7 +836,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         title=dict(
             text=f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
             font=dict(
-                size=14, color=COLOR_TEXT, family="Calibri, sans-serif"
+                size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"
             ),
             x=0.5,
         ),
@@ -791,11 +852,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
             y=-0.22,
             xanchor="center",
             x=0.5,
-            font=dict(size=11, family="Calibri, sans-serif"),
+            font=dict(size=11, family="Segoe UI, Calibri, sans-serif"),
         ),
     )
     fig1.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
     )
     fig1.update_yaxes(
         title_text="← Tổng Lệnh",
@@ -844,7 +905,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
                 textposition="outside",
                 textfont=dict(
                     size=12,
-                    family="Calibri, sans-serif",
+                    family="Segoe UI, Calibri, sans-serif",
                     color=[COLOR_SUCCESS, COLOR_DANGER],
                 ),
                 direction="clockwise",
@@ -856,7 +917,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         title=dict(
             text="TỶ LỆ HOÀN THÀNH TỔNG QUAN",
             font=dict(
-                size=14, color=COLOR_TEXT, family="Calibri, sans-serif"
+                size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"
             ),
             x=0.5,
         ),
@@ -873,7 +934,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
                 x=0.5,
                 y=0.5,
                 font_size=12,
-                font_family="Calibri, sans-serif",
+                font_family="Segoe UI, Calibri, sans-serif",
                 showarrow=False,
             )
         ],
@@ -944,7 +1005,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             marker_color=COLOR_PRIMARY,
             text=[f"{int(v):,}" if v > 0 else "" for v in m3_qty],
             textposition="outside",
-            textfont=dict(color=COLOR_PRIMARY, size=11, family="Calibri, sans-serif"),
+            textfont=dict(color=COLOR_PRIMARY, size=11, family="Segoe UI, Calibri, sans-serif"),
         ),
         secondary_y=False,
     )
@@ -965,7 +1026,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig3.update_layout(
         title=dict(
             text=f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
-            font=dict(size=14, color=COLOR_TEXT, family="Calibri, sans-serif"),
+            font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
             x=0.5,
         ),
         margin=dict(l=30, r=30, t=50, b=50),
@@ -976,7 +1037,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig3.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
     )
     fig3.update_yaxes(
         title_text="SL Hoàn Thành [Log]",
@@ -1038,7 +1099,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             marker_color=bar_colors,
             text=[f"{int(v):,}" if v > 0 else "" for v in deliv_fams],
             textposition="outside",
-            textfont=dict(color=bar_colors, size=11, family="Calibri, sans-serif"),
+            textfont=dict(color=bar_colors, size=11, family="Segoe UI, Calibri, sans-serif"),
         ),
         secondary_y=False,
     )
@@ -1059,7 +1120,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig4.update_layout(
         title=dict(
             text="TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
-            font=dict(size=14, color=COLOR_TEXT, family="Calibri, sans-serif"),
+            font=dict(size=14, color=COLOR_TEXT, family="Segoe UI, Calibri, sans-serif"),
             x=0.5,
         ),
         margin=dict(l=30, r=30, t=50, b=50),
@@ -1070,7 +1131,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         bargap=0.3,
     )
     fig4.update_xaxes(
-        showgrid=False, tickfont=dict(size=11, family="Calibri, sans-serif")
+        showgrid=False, tickfont=dict(size=11, family="Segoe UI, Calibri, sans-serif")
     )
     fig4.update_yaxes(
         title_text="Số Lượng SP [Log]",
@@ -1216,12 +1277,10 @@ def render_coois_tab_layout(phan_he_code, title_text):
       "Tỷ Lệ Cơ Cấu (%)": pct_yr_share,
   })
 
+  st.markdown("<hr style='margin: 8px 0 18px 0; border-color: #E4E8F0;'>", unsafe_allow_html=True)
   col_hdr, col_btn = st.columns([2.5, 1.2])
   with col_hdr:
-    st.markdown(
-        f"### 📑 BẢNG SỐ LIỆU TỔNG HỢP & TỶ LỆ HIỆU CHỈNH -"
-        f" {title_clean.upper()}"
-    )
+    render_section_heading(f"📑 Bảng Số Liệu Tổng Hợp & Tỷ Lệ Hiệu Chỉnh — {title_clean.upper()}")
   excel_bytes = generate_print_ready_excel(
       phan_he_code,
       title_clean,
