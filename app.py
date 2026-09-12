@@ -79,7 +79,7 @@ st.markdown(
             margin: 0 auto !important;
         }
 
-        /* ============ TOP FILTER CARD (NỔI BẬT DẢI LỌC NGÀY) ============ */
+        /* TOP FILTER BANNER */
         .filter-banner {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -94,7 +94,7 @@ st.markdown(
             display: flex; align-items: center; gap: 6px;
         }
 
-        /* ============ TOP PAGE HEADER ============ */
+        /* PAGE HEADER */
         .page-header {
             display: flex; align-items: flex-end; justify-content: space-between;
             padding-bottom: 16px; margin-bottom: 18px;
@@ -111,10 +111,10 @@ st.markdown(
             padding: 7px 15px; border-radius: 999px; white-space: nowrap;
         }
 
-        /* ============ TABS ============ */
+        /* TABS */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: flex-start !important;
-            gap: 30px !important;
+            gap: 24px !important;
             background-color: transparent !important;
             padding: 0px !important;
             border-bottom: 1px solid var(--border) !important;
@@ -139,7 +139,7 @@ st.markdown(
         }
         .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
-        /* ============ KPI CARDS ============ */
+        /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
         .kpi-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -163,7 +163,7 @@ st.markdown(
         .kpi-card .kpi-value { font-size: 27px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
         .kpi-card .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; font-weight: 500; }
 
-        /* ============ CHART CARDS ============ */
+        /* CHART CARDS */
         .chart-card {
             background-color: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
             padding: 18px 22px 10px 22px; box-shadow: 0 2px 4px rgba(15,18,34,0.06), 0 12px 28px -8px rgba(15,18,34,0.14);
@@ -189,7 +189,7 @@ st.markdown(
 
         .section-heading { font-size: 16.5px; font-weight: 800; color: var(--text); margin: 6px 0 14px 2px; letter-spacing: -0.01em; }
 
-        /* ============ BẢNG DỮ LIỆU ============ */
+        /* DATAFRAME */
         div[data-testid="stDataFrame"] {
             border: 1px solid var(--border) !important; border-radius: var(--radius) !important;
             box-shadow: 0 2px 4px rgba(15,18,34,0.05), 0 8px 20px -6px rgba(15,18,34,0.10);
@@ -197,7 +197,7 @@ st.markdown(
         }
         div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-family: 'Inter', sans-serif !important; }
 
-        /* ============ INPUT / SELECT / DATE ============ */
+        /* WIDGETS */
         [data-testid="stWidgetLabel"] p {
             font-size: 12px !important; font-weight: 700 !important; color: var(--text-muted) !important;
             text-transform: uppercase; letter-spacing: 0.03em;
@@ -206,13 +206,13 @@ st.markdown(
             border-radius: var(--radius-sm) !important; border-color: var(--border) !important;
             font-family: 'Inter', sans-serif !important; background-color: var(--surface) !important;
         }
-        .stDateInput input {
+        .stDateInput input, .stTextInput input {
             border-radius: var(--radius-sm) !important; font-family: 'Inter', sans-serif !important;
             border-color: var(--border) !important; background-color: var(--surface) !important;
             font-weight: 600 !important;
         }
 
-        /* ============ BUTTONS ============ */
+        /* BUTTONS */
         .stButton button, .stDownloadButton button {
             border-radius: var(--radius-sm) !important; font-weight: 600 !important;
             font-family: 'Inter', sans-serif !important; border: 1px solid var(--border) !important;
@@ -440,7 +440,7 @@ def generate_print_ready_excel(
   return output.getvalue()
 
 
-# ================= 3. BỘ LỌC THỜI GIAN NGAY NỔI BẬT ĐỈNH MÀN HÌNH CHÍNH =================
+# ================= 3. BỘ LỌC THỜI GIAN ĐỈNH TRANG & SIDEBAR =================
 st.markdown('<div class="filter-banner">', unsafe_allow_html=True)
 st.markdown('<div class="filter-title">📅 BỘ LỌC THỜI GIAN BÁO CÁO TOÀN HỆ THỐNG</div>', unsafe_allow_html=True)
 col_f1, col_f2, col_f3 = st.columns([1.5, 1.5, 1.2])
@@ -455,6 +455,14 @@ with col_f3:
     st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
+with st.sidebar:
+  st.markdown('<div class="sidebar-heading">⚙️ CẤU HÌNH DỰ PHÒNG</div>', unsafe_allow_html=True)
+  st.info("💡 Bạn cũng có thể chọn ngày ở đây:")
+  sb_tu = st.date_input("Từ ngày (Sidebar)", tu_date, key="sb_tu")
+  sb_den = st.date_input("Đến ngày (Sidebar)", den_date, key="sb_den")
+  if sb_tu != tu_date or sb_den != den_date:
+    tu_date, den_date = sb_tu, sb_den
+
 df_qa32, df_coois = load_data(tu_date, den_date)
 
 render_page_header(
@@ -464,12 +472,13 @@ render_page_header(
 )
 
 
-# ================= 4. NAVIGATION TABS =================
-tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
+# ================= 4. NAVIGATION TABS (5 TABS) =================
+tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to, tab_danh_sach = st.tabs([
     "📋 Báo Cáo Vật Tư",
     "⚙️ Báo Cáo Cơ Khí",
     "🔌 Báo Cáo TU/TI",
     "⚡ Báo Cáo Công Tơ",
+    "🔍 Danh Sách Chi Tiết",
 ])
 
 # ================= 5. TAB 1: BÁO CÁO VẬT TƯ =================
@@ -1081,7 +1090,240 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
 
-# ================= 7. RENDER NỘI DUNG CÁC TAB =================
+# ================= 7. TAB 5: DANH SÁCH CHI TIẾT VẬT TƯ & LỆNH KIỂM TRA =================
+with tab_danh_sach:
+  render_section_heading("🔍 QUẢN LÝ DANH SÁCH CHI TIẾT VẬT TƯ & LỆNH SẢN XUẤT")
+
+  # --- BỘ LỌC CHUYÊN SÂU DÀNH RIÊNG CHO TAB DANH SÁCH ---
+  chart_card_open("⚙️ Bộ Lọc Dữ Liệu Chi Tiết")
+  col_flt1, col_flt2, col_flt3, col_flt4 = st.columns([1, 1, 1, 1.5])
+
+  with col_flt1:
+    filter_status = st.selectbox(
+        "Trạng thái kiểm:",
+        ["Tất cả", "Đã kiểm (Đã UD)", "Chưa kiểm (Chưa UD)"],
+        key="ds_filter_status",
+    )
+  with col_flt2:
+    filter_phan_he = st.selectbox(
+        "Xưởng / Phân hệ:",
+        ["Tất cả", "Cơ khí (CO_KHI)", "TU/TI (TU_TI)", "Công tơ (CONG_TO)"],
+        key="ds_filter_phan_he",
+    )
+  with col_flt3:
+    filter_loai_sp = st.selectbox(
+        "Loại sản phẩm:",
+        ["Tất cả", "Bán thành phẩm (Đầu 5)", "Thành phẩm (Khác Đầu 5)"],
+        key="ds_filter_loai_sp",
+    )
+  with col_flt4:
+    search_keyword = st.text_input(
+        "🔎 Tìm kiếm nhanh (Mã/Tên/Số lệnh/NCC):",
+        "",
+        key="ds_search_keyword",
+    )
+  chart_card_close()
+
+  # MAPPING BỘ LỌC
+  phan_he_code_map = {
+      "Cơ khí (CO_KHI)": "CO_KHI",
+      "TU/TI (TU_TI)": "TU_TI",
+      "Công tơ (CONG_TO)": "CONG_TO",
+  }
+
+  # --- 1. XỬ LÝ & LỌC BẢNG VẬT TƯ QA32 ---
+  df_qa32_view = df_qa32.copy() if not df_qa32.empty else pd.DataFrame()
+
+  if not df_qa32_view.empty:
+    # Chuẩn hóa ngày tháng
+    df_qa32_view["ngay_ve_format"] = pd.to_datetime(
+        df_qa32_view["ngay_ve_dt"], errors="coerce"
+    ).dt.strftime("%d/%m/%Y")
+
+    # Lọc Đã kiểm / Chưa kiểm
+    if filter_status == "Đã kiểm (Đã UD)":
+      df_qa32_view = df_qa32_view[
+          df_qa32_view["xac_nhan_sap"].notna()
+          & (~df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False))
+      ]
+    elif filter_status == "Chưa kiểm (Chưa UD)":
+      df_qa32_view = df_qa32_view[
+          df_qa32_view["xac_nhan_sap"].isna()
+          | df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False)
+      ]
+
+    # Lọc Bán thành phẩm / Thành phẩm
+    if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
+      df_qa32_view = df_qa32_view[
+          df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
+      ]
+    elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
+      df_qa32_view = df_qa32_view[
+          ~df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
+      ]
+
+    # Lọc từ khóa tìm kiếm
+    if search_keyword.strip():
+      kw = search_keyword.strip().lower()
+      df_qa32_view = df_qa32_view[
+          df_qa32_view["ma_vt"].astype(str).str.lower().str.contains(kw)
+          | df_qa32_view["ten_vt"].astype(str).str.lower().str.contains(kw)
+          | df_qa32_view["ncc"].astype(str).str.lower().str.contains(kw)
+      ]
+
+  # --- 2. XỬ LÝ & LỌC BẢNG LỆNH COOIS ---
+  df_coois_view = df_coois.copy() if not df_coois.empty else pd.DataFrame()
+
+  if not df_coois_view.empty:
+    df_coois_view["ngay_lenh_format"] = pd.to_datetime(
+        df_coois_view["ngay_lenh_dt"], errors="coerce"
+    ).dt.strftime("%d/%m/%Y")
+
+    # Lọc Xưởng / Phân hệ
+    if filter_phan_he != "Tất cả":
+      target_ph = phan_he_code_map.get(filter_phan_he)
+      df_coois_view = df_coois_view[df_coois_view["phan_he"] == target_ph]
+
+    # Lọc Đã kiểm/hoàn thành hay chưa
+    if filter_status == "Đã kiểm (Đã UD)":
+      df_coois_view = df_coois_view[df_coois_view["sl_ht"] >= df_coois_view["sl_tong"]]
+    elif filter_status == "Chưa kiểm (Chưa UD)":
+      df_coois_view = df_coois_view[df_coois_view["sl_ht"] < df_coois_view["sl_tong"]]
+
+    # Lọc Phân loại SP
+    if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
+      df_coois_view = df_coois_view[
+          df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
+      ]
+    elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
+      df_coois_view = df_coois_view[
+          ~df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
+      ]
+
+    # Lọc từ khóa tìm kiếm
+    if search_keyword.strip():
+      kw = search_keyword.strip().lower()
+      df_coois_view = df_coois_view[
+          df_coois_view["so_lenh"].astype(str).str.lower().str.contains(kw)
+          | df_coois_view["ma_tp"].astype(str).str.lower().str.contains(kw)
+          | df_coois_view["ten_tp"].astype(str).str.lower().str.contains(kw)
+      ]
+
+  # --- HIỂN THỊ CÁC BẢNG DỮ LIỆU ---
+  tab_sub_vt, tab_sub_lenh = st.tabs([
+      "📦 1. Danh Sách Vật Tư (QA32)",
+      "⚙️ 2. Danh Sách Lệnh Kiểm Tra / Sản Xuất (COOIS)",
+  ])
+
+  with tab_sub_vt:
+    if not df_qa32_view.empty:
+      df_vt_display = pd.DataFrame()
+      df_vt_display["STT"] = np.arange(1, len(df_qa32_view) + 1)
+      df_vt_display["Ngày tháng năm"] = df_qa32_view["ngay_ve_format"].values
+      df_vt_display["Lot"] = (
+          df_qa32_view["lot"].values
+          if "lot" in df_qa32_view.columns
+          else df_qa32_view.index.values
+      )
+      df_vt_display["Mã vật tư"] = df_qa32_view["ma_vt"].values
+      df_vt_display["Tên vật tư"] = df_qa32_view["ten_vt"].values
+      df_vt_display["Nhà cung cấp"] = df_qa32_view["ncc"].values
+
+      # Đổi nhãn Giá trị kiểm: nếu chưa UD thì ghi "Chưa kiểm (Chưa UD)"
+      raw_ud = df_qa32_view["xac_nhan_sap"].fillna("Chưa kiểm (Chưa UD)").values
+      clean_ud = [
+          "Chưa kiểm (Chưa UD)"
+          if ("CHƯA" in str(u).upper() or str(u).strip() in ["nan", "None", ""])
+          else str(u)
+          for u in raw_ud
+      ]
+      df_vt_display["Giá trị kiểm"] = clean_ud
+
+      st.markdown(
+          f"##### 📋 Danh Sách Vật Tư ({len(df_vt_display):,} bản ghi)"
+      )
+      st.dataframe(
+          df_vt_display,
+          column_config={
+              "STT": st.column_config.NumberColumn("STT", width="small"),
+              "Giá trị kiểm": st.column_config.TextColumn(
+                  "Giá trị kiểm", width="medium"
+              ),
+          },
+          use_container_width=True,
+          hide_index=True,
+          height=480,
+      )
+
+      # Nút xuất Excel riêng cho Bảng Vật tư
+      buf_vt = io.BytesIO()
+      with pd.ExcelWriter(buf_vt, engine="openpyxl") as writer:
+        df_vt_display.to_excel(
+            writer, sheet_name="DanhSach_VatTu_QA32", index=False
+        )
+      st.download_button(
+          label="📥 Xuất Bảng Vật Tư (Excel)",
+          data=buf_vt.getvalue(),
+          file_name=f"DanhSach_VatTu_QA32_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          type="primary",
+      )
+    else:
+      st.warning("⚠️ Không tìm thấy bản ghi vật tư nào phù hợp với bộ lọc.")
+
+  with tab_sub_lenh:
+    if not df_coois_view.empty:
+      df_lenh_display = pd.DataFrame()
+      df_lenh_display["STT"] = np.arange(1, len(df_coois_view) + 1)
+      df_lenh_display["Ngày tháng năm"] = df_coois_view["ngay_lenh_format"].values
+      df_lenh_display["Lệnh"] = df_coois_view["so_lenh"].values
+      df_lenh_display["Mã sản phẩm"] = df_coois_view["ma_tp"].values
+      df_lenh_display["Tên sản phẩm"] = df_coois_view["ten_tp"].values
+      df_lenh_display["Tổng số lượng"] = df_coois_view["sl_tong"].values
+      df_lenh_display["Tổng số đã giao"] = df_coois_view["sl_ht"].values
+      df_lenh_display["Text ghi chú"] = (
+          df_coois_view["ghi_chu"].values
+          if "ghi_chu" in df_coois_view.columns
+          else df_coois_view["phan_he"].values
+      )
+
+      st.markdown(
+          f"##### ⚙️ Danh Sách Lệnh Kiểm Tra / Sản Xuất ({len(df_lenh_display):,} bản ghi)"
+      )
+      st.dataframe(
+          df_lenh_display,
+          column_config={
+              "STT": st.column_config.NumberColumn("STT", width="small"),
+              "Tổng số lượng": st.column_config.NumberColumn(
+                  "Tổng số lượng", format="%d"
+              ),
+              "Tổng số đã giao": st.column_config.NumberColumn(
+                  "Tổng số đã giao", format="%d"
+              ),
+          },
+          use_container_width=True,
+          hide_index=True,
+          height=480,
+      )
+
+      # Nút xuất Excel riêng cho Bảng Lệnh
+      buf_lenh = io.BytesIO()
+      with pd.ExcelWriter(buf_lenh, engine="openpyxl") as writer:
+        df_lenh_display.to_excel(
+            writer, sheet_name="DanhSach_Lenh_COOIS", index=False
+        )
+      st.download_button(
+          label="📥 Xuất Bảng Lệnh Kiểm Tra (Excel)",
+          data=buf_lenh.getvalue(),
+          file_name=f"DanhSach_Lenh_COOIS_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          type="primary",
+      )
+    else:
+      st.warning("⚠️ Không tìm thấy bản ghi lệnh nào phù hợp với bộ lọc.")
+
+
+# ================= 8. RENDER NỘI DUNG CÁC TAB BÁO CÁO CŨ =================
 with tab_co_khi:
   render_coois_tab_layout("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
 with tab_tuti:
