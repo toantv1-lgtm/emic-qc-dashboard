@@ -15,7 +15,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD & HỆ THỐNG THIẾT KẾ HIỆN ĐẠI =================
+# ================= 1. CẤU HÌNH DASHBOARD & HỆ THỐNG THIẾT KẾ =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -79,7 +79,6 @@ st.markdown(
             margin: 0 auto !important;
         }
 
-        /* TOP FILTER BANNER */
         .filter-banner {
             background: var(--surface);
             border: 1px solid var(--border);
@@ -94,7 +93,6 @@ st.markdown(
             display: flex; align-items: center; gap: 6px;
         }
 
-        /* PAGE HEADER */
         .page-header {
             display: flex; align-items: flex-end; justify-content: space-between;
             padding-bottom: 16px; margin-bottom: 18px;
@@ -111,7 +109,6 @@ st.markdown(
             padding: 7px 15px; border-radius: 999px; white-space: nowrap;
         }
 
-        /* TABS */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: flex-start !important;
             gap: 24px !important;
@@ -139,7 +136,6 @@ st.markdown(
         }
         .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
-        /* KPI CARDS */
         .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
         .kpi-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
@@ -163,7 +159,6 @@ st.markdown(
         .kpi-card .kpi-value { font-size: 27px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
         .kpi-card .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; font-weight: 500; }
 
-        /* CHART CARDS */
         .chart-card {
             background-color: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
             padding: 18px 22px 10px 22px; box-shadow: 0 2px 4px rgba(15,18,34,0.06), 0 12px 28px -8px rgba(15,18,34,0.14);
@@ -189,7 +184,6 @@ st.markdown(
 
         .section-heading { font-size: 16.5px; font-weight: 800; color: var(--text); margin: 6px 0 14px 2px; letter-spacing: -0.01em; }
 
-        /* DATAFRAME */
         div[data-testid="stDataFrame"] {
             border: 1px solid var(--border) !important; border-radius: var(--radius) !important;
             box-shadow: 0 2px 4px rgba(15,18,34,0.05), 0 8px 20px -6px rgba(15,18,34,0.10);
@@ -197,7 +191,6 @@ st.markdown(
         }
         div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-family: 'Inter', sans-serif !important; }
 
-        /* WIDGETS */
         [data-testid="stWidgetLabel"] p {
             font-size: 12px !important; font-weight: 700 !important; color: var(--text-muted) !important;
             text-transform: uppercase; letter-spacing: 0.03em;
@@ -212,7 +205,6 @@ st.markdown(
             font-weight: 600 !important;
         }
 
-        /* BUTTONS */
         .stButton button, .stDownloadButton button {
             border-radius: var(--radius-sm) !important; font-weight: 600 !important;
             font-family: 'Inter', sans-serif !important; border: 1px solid var(--border) !important;
@@ -294,11 +286,11 @@ def chart_card_close():
   st.markdown("</div>", unsafe_allow_html=True)
 
 
-COLOR_SUCCESS = "#0EA968"  # Teal / Xanh lá
-COLOR_PRIMARY = "#4F46E5"  # Indigo
-COLOR_DANGER = "#E23D4D"  # Rose / Đỏ
-COLOR_WARNING = "#EA8A0A"  # Amber / Cam
-COLOR_PURPLE = "#9333EA"  # Purple / Tím
+COLOR_SUCCESS = "#0EA968"
+COLOR_PRIMARY = "#4F46E5"
+COLOR_DANGER = "#E23D4D"
+COLOR_WARNING = "#EA8A0A"
+COLOR_PURPLE = "#9333EA"
 COLOR_TEXT = "#0F1222"
 
 DISTINCT_COLORS = [
@@ -440,7 +432,7 @@ def generate_print_ready_excel(
   return output.getvalue()
 
 
-# ================= 3. BỘ LỌC THỜI GIAN ĐỈNH TRANG & SIDEBAR =================
+# ================= 3. BỘ LỌC THỜI GIAN CỐ ĐỊNH =================
 st.markdown('<div class="filter-banner">', unsafe_allow_html=True)
 st.markdown('<div class="filter-title">📅 BỘ LỌC THỜI GIAN BÁO CÁO TOÀN HỆ THỐNG</div>', unsafe_allow_html=True)
 col_f1, col_f2, col_f3 = st.columns([1.5, 1.5, 1.2])
@@ -500,7 +492,7 @@ with tab_vat_tu:
       if not (0 <= m_idx < 12):
         m_idx = 0
 
-      st_clean = str(r["xac_nhan_sap"]).strip().upper().replace(" ", "") if pd.notna(r["xac_nhan_sap"]) else ""
+      st_clean = str(r["xac_nhan_sap"]).strip().upper().replace(" ", "") if "xac_nhan_sap" in r and pd.notna(r["xac_nhan_sap"]) else ""
       ft_val = float(r["ft_qty"]) if ("ft_qty" in r and pd.notna(r["ft_qty"])) else 0.0
       by_val = float(r["by_sample"]) if ("by_sample" in r and pd.notna(r["by_sample"])) else 0.0
       ca_val = float(r["ca_qty"]) if ("ca_qty" in r and pd.notna(r["ca_qty"])) else 0.0
@@ -526,9 +518,9 @@ with tab_vat_tu:
         else:
           ud01_m[m_idx] += 1
 
-      ma_vt_str = str(r["ma_vt"]).strip() if pd.notna(r["ma_vt"]) else ""
-      ten_vt_str = str(r["ten_vt"]).strip() if pd.notna(r["ten_vt"]) else ""
-      ncc_str = str(r["ncc"]).strip() if pd.notna(r["ncc"]) else ""
+      ma_vt_str = str(r["ma_vt"]).strip() if "ma_vt" in r and pd.notna(r["ma_vt"]) else ""
+      ten_vt_str = str(r["ten_vt"]).strip() if "ten_vt" in r and pd.notna(r["ten_vt"]) else ""
+      ncc_str = str(r["ncc"]).strip() if "ncc" in r and pd.notna(r["ncc"]) else ""
 
       if is_ud02 or is_ud03 or ca_val > 0 or (st_clean and not is_ud01 and not is_uninspected):
         if "VIHA" in ncc_str.upper():
@@ -1094,7 +1086,6 @@ def render_coois_tab_layout(phan_he_code, title_text):
 with tab_danh_sach:
   render_section_heading("🔍 QUẢN LÝ DANH SÁCH CHI TIẾT VẬT TƯ & LỆNH SẢN XUẤT")
 
-  # --- BỘ LỌC CHUYÊN SÂU DÀNH RIÊNG CHO TAB DANH SÁCH ---
   chart_card_open("⚙️ Bộ Lọc Dữ Liệu Chi Tiết")
   col_flt1, col_flt2, col_flt3, col_flt4 = st.columns([1, 1, 1, 1.5])
 
@@ -1124,206 +1115,199 @@ with tab_danh_sach:
     )
   chart_card_close()
 
-  # MAPPING BỘ LỌC
   phan_he_code_map = {
       "Cơ khí (CO_KHI)": "CO_KHI",
       "TU/TI (TU_TI)": "TU_TI",
       "Công tơ (CONG_TO)": "CONG_TO",
   }
 
-  # --- 1. XỬ LÝ & LỌC BẢNG VẬT TƯ QA32 ---
-  df_qa32_view = df_qa32.copy() if not df_qa32.empty else pd.DataFrame()
-
-  if not df_qa32_view.empty:
-    # Chuẩn hóa ngày tháng
-    df_qa32_view["ngay_ve_format"] = pd.to_datetime(
-        df_qa32_view["ngay_ve_dt"], errors="coerce"
-    ).dt.strftime("%d/%m/%Y")
-
-    # Lọc Đã kiểm / Chưa kiểm
-    if filter_status == "Đã kiểm (Đã UD)":
-      df_qa32_view = df_qa32_view[
-          df_qa32_view["xac_nhan_sap"].notna()
-          & (~df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False))
-      ]
-    elif filter_status == "Chưa kiểm (Chưa UD)":
-      df_qa32_view = df_qa32_view[
-          df_qa32_view["xac_nhan_sap"].isna()
-          | df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False)
-      ]
-
-    # Lọc Bán thành phẩm / Thành phẩm
-    if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
-      df_qa32_view = df_qa32_view[
-          df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
-      ]
-    elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
-      df_qa32_view = df_qa32_view[
-          ~df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
-      ]
-
-    # Lọc từ khóa tìm kiếm
-    if search_keyword.strip():
-      kw = search_keyword.strip().lower()
-      df_qa32_view = df_qa32_view[
-          df_qa32_view["ma_vt"].astype(str).str.lower().str.contains(kw)
-          | df_qa32_view["ten_vt"].astype(str).str.lower().str.contains(kw)
-          | df_qa32_view["ncc"].astype(str).str.lower().str.contains(kw)
-      ]
-
-  # --- 2. XỬ LÝ & LỌC BẢNG LỆNH COOIS ---
-  df_coois_view = df_coois.copy() if not df_coois.empty else pd.DataFrame()
-
-  if not df_coois_view.empty:
-    df_coois_view["ngay_lenh_format"] = pd.to_datetime(
-        df_coois_view["ngay_lenh_dt"], errors="coerce"
-    ).dt.strftime("%d/%m/%Y")
-
-    # Lọc Xưởng / Phân hệ
-    if filter_phan_he != "Tất cả":
-      target_ph = phan_he_code_map.get(filter_phan_he)
-      df_coois_view = df_coois_view[df_coois_view["phan_he"] == target_ph]
-
-    # Lọc Đã kiểm/hoàn thành hay chưa
-    if filter_status == "Đã kiểm (Đã UD)":
-      df_coois_view = df_coois_view[df_coois_view["sl_ht"] >= df_coois_view["sl_tong"]]
-    elif filter_status == "Chưa kiểm (Chưa UD)":
-      df_coois_view = df_coois_view[df_coois_view["sl_ht"] < df_coois_view["sl_tong"]]
-
-    # Lọc Phân loại SP
-    if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
-      df_coois_view = df_coois_view[
-          df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
-      ]
-    elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
-      df_coois_view = df_coois_view[
-          ~df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
-      ]
-
-    # Lọc từ khóa tìm kiếm
-    if search_keyword.strip():
-      kw = search_keyword.strip().lower()
-      df_coois_view = df_coois_view[
-          df_coois_view["so_lenh"].astype(str).str.lower().str.contains(kw)
-          | df_coois_view["ma_tp"].astype(str).str.lower().str.contains(kw)
-          | df_coois_view["ten_tp"].astype(str).str.lower().str.contains(kw)
-      ]
-
-  # --- HIỂN THỊ CÁC BẢNG DỮ LIỆU ---
   tab_sub_vt, tab_sub_lenh = st.tabs([
       "📦 1. Danh Sách Vật Tư (QA32)",
       "⚙️ 2. Danh Sách Lệnh Kiểm Tra / Sản Xuất (COOIS)",
   ])
 
   with tab_sub_vt:
-    if not df_qa32_view.empty:
-      df_vt_display = pd.DataFrame()
-      df_vt_display["STT"] = np.arange(1, len(df_qa32_view) + 1)
-      df_vt_display["Ngày tháng năm"] = df_qa32_view["ngay_ve_format"].values
-      df_vt_display["Lot"] = (
-          df_qa32_view["lot"].values
-          if "lot" in df_qa32_view.columns
-          else df_qa32_view.index.values
-      )
-      df_vt_display["Mã vật tư"] = df_qa32_view["ma_vt"].values
-      df_vt_display["Tên vật tư"] = df_qa32_view["ten_vt"].values
-      df_vt_display["Nhà cung cấp"] = df_qa32_view["ncc"].values
+    if not df_qa32.empty:
+      df_qa32_view = df_qa32.copy()
+      if "ngay_ve_dt" in df_qa32_view.columns:
+        df_qa32_view["ngay_ve_format"] = pd.to_datetime(
+            df_qa32_view["ngay_ve_dt"], errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
+      else:
+        df_qa32_view["ngay_ve_format"] = "-"
 
-      # Đổi nhãn Giá trị kiểm: nếu chưa UD thì ghi "Chưa kiểm (Chưa UD)"
-      raw_ud = df_qa32_view["xac_nhan_sap"].fillna("Chưa kiểm (Chưa UD)").values
-      clean_ud = [
-          "Chưa kiểm (Chưa UD)"
-          if ("CHƯA" in str(u).upper() or str(u).strip() in ["nan", "None", ""])
-          else str(u)
-          for u in raw_ud
-      ]
-      df_vt_display["Giá trị kiểm"] = clean_ud
+      if "xac_nhan_sap" in df_qa32_view.columns:
+        if filter_status == "Đã kiểm (Đã UD)":
+          df_qa32_view = df_qa32_view[
+              df_qa32_view["xac_nhan_sap"].notna()
+              & (~df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False, na=False))
+          ]
+        elif filter_status == "Chưa kiểm (Chưa UD)":
+          df_qa32_view = df_qa32_view[
+              df_qa32_view["xac_nhan_sap"].isna()
+              | df_qa32_view["xac_nhan_sap"].astype(str).str.contains("CHƯA|NAN|NONE", case=False, na=False)
+          ]
 
-      st.markdown(
-          f"##### 📋 Danh Sách Vật Tư ({len(df_vt_display):,} bản ghi)"
-      )
-      st.dataframe(
-          df_vt_display,
-          column_config={
-              "STT": st.column_config.NumberColumn("STT", width="small"),
-              "Giá trị kiểm": st.column_config.TextColumn(
-                  "Giá trị kiểm", width="medium"
-              ),
-          },
-          use_container_width=True,
-          hide_index=True,
-          height=480,
-      )
+      if "ma_vt" in df_qa32_view.columns:
+        if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
+          df_qa32_view = df_qa32_view[
+              df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
+          ]
+        elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
+          df_qa32_view = df_qa32_view[
+              ~df_qa32_view["ma_vt"].astype(str).str.lstrip("0").str.startswith("5")
+          ]
 
-      # Nút xuất Excel riêng cho Bảng Vật tư
-      buf_vt = io.BytesIO()
-      with pd.ExcelWriter(buf_vt, engine="openpyxl") as writer:
-        df_vt_display.to_excel(
-            writer, sheet_name="DanhSach_VatTu_QA32", index=False
+      if search_keyword.strip():
+        kw = search_keyword.strip().lower()
+        m1 = df_qa32_view["ma_vt"].astype(str).str.lower().str.contains(kw, na=False) if "ma_vt" in df_qa32_view.columns else False
+        m2 = df_qa32_view["ten_vt"].astype(str).str.lower().str.contains(kw, na=False) if "ten_vt" in df_qa32_view.columns else False
+        m3 = df_qa32_view["ncc"].astype(str).str.lower().str.contains(kw, na=False) if "ncc" in df_qa32_view.columns else False
+        df_qa32_view = df_qa32_view[m1 | m2 | m3]
+
+      if not df_qa32_view.empty:
+        df_vt_display = pd.DataFrame()
+        df_vt_display["STT"] = np.arange(1, len(df_qa32_view) + 1)
+        df_vt_display["Ngày tháng năm"] = df_qa32_view["ngay_ve_format"].values
+        df_vt_display["Lot"] = (
+            df_qa32_view["lot"].values
+            if "lot" in df_qa32_view.columns
+            else (df_qa32_view["so_lot"].values if "so_lot" in df_qa32_view.columns else df_qa32_view.index + 1)
         )
-      st.download_button(
-          label="📥 Xuất Bảng Vật Tư (Excel)",
-          data=buf_vt.getvalue(),
-          file_name=f"DanhSach_VatTu_QA32_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          type="primary",
-      )
+        df_vt_display["Mã vật tư"] = df_qa32_view["ma_vt"].values if "ma_vt" in df_qa32_view.columns else ""
+        df_vt_display["Tên vật tư"] = df_qa32_view["ten_vt"].values if "ten_vt" in df_qa32_view.columns else ""
+        df_vt_display["Nhà cung cấp"] = df_qa32_view["ncc"].values if "ncc" in df_qa32_view.columns else ""
+
+        raw_ud = (
+            df_qa32_view["xac_nhan_sap"].fillna("Chưa kiểm (Chưa UD)").values
+            if "xac_nhan_sap" in df_qa32_view.columns
+            else ["Chưa kiểm (Chưa UD)"] * len(df_qa32_view)
+        )
+        clean_ud = [
+            "Chưa kiểm (Chưa UD)"
+            if ("CHƯA" in str(u).upper() or str(u).strip() in ["nan", "None", ""])
+            else str(u)
+            for u in raw_ud
+        ]
+        df_vt_display["Giá trị kiểm"] = clean_ud
+
+        st.markdown(f"##### 📋 Danh Sách Vật Tư ({len(df_vt_display):,} bản ghi)")
+        st.dataframe(
+            df_vt_display,
+            column_config={
+                "STT": st.column_config.NumberColumn("STT", width="small"),
+                "Giá trị kiểm": st.column_config.TextColumn("Giá trị kiểm", width="medium"),
+            },
+            use_container_width=True,
+            hide_index=True,
+            height=480,
+        )
+
+        buf_vt = io.BytesIO()
+        with pd.ExcelWriter(buf_vt, engine="openpyxl") as writer:
+          df_vt_display.to_excel(
+              writer, sheet_name="DanhSach_VatTu_QA32", index=False
+          )
+        st.download_button(
+            label="📥 Xuất Bảng Vật Tư (Excel)",
+            data=buf_vt.getvalue(),
+            file_name=f"DanhSach_VatTu_QA32_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+        )
+      else:
+        st.warning("⚠️ Không tìm thấy bản ghi vật tư nào phù hợp với bộ lọc.")
     else:
-      st.warning("⚠️ Không tìm thấy bản ghi vật tư nào phù hợp với bộ lọc.")
+      st.info("💡 Chưa có dữ liệu vật tư.")
 
   with tab_sub_lenh:
-    if not df_coois_view.empty:
-      df_lenh_display = pd.DataFrame()
-      df_lenh_display["STT"] = np.arange(1, len(df_coois_view) + 1)
-      df_lenh_display["Ngày tháng năm"] = df_coois_view["ngay_lenh_format"].values
-      df_lenh_display["Lệnh"] = df_coois_view["so_lenh"].values
-      df_lenh_display["Mã sản phẩm"] = df_coois_view["ma_tp"].values
-      df_lenh_display["Tên sản phẩm"] = df_coois_view["ten_tp"].values
-      df_lenh_display["Tổng số lượng"] = df_coois_view["sl_tong"].values
-      df_lenh_display["Tổng số đã giao"] = df_coois_view["sl_ht"].values
-      df_lenh_display["Text ghi chú"] = (
-          df_coois_view["ghi_chu"].values
-          if "ghi_chu" in df_coois_view.columns
-          else df_coois_view["phan_he"].values
-      )
+    if not df_coois.empty:
+      df_coois_view = df_coois.copy()
+      if "ngay_lenh_dt" in df_coois_view.columns:
+        df_coois_view["ngay_lenh_format"] = pd.to_datetime(
+            df_coois_view["ngay_lenh_dt"], errors="coerce"
+        ).dt.strftime("%d/%m/%Y")
+      else:
+        df_coois_view["ngay_lenh_format"] = "-"
 
-      st.markdown(
-          f"##### ⚙️ Danh Sách Lệnh Kiểm Tra / Sản Xuất ({len(df_lenh_display):,} bản ghi)"
-      )
-      st.dataframe(
-          df_lenh_display,
-          column_config={
-              "STT": st.column_config.NumberColumn("STT", width="small"),
-              "Tổng số lượng": st.column_config.NumberColumn(
-                  "Tổng số lượng", format="%d"
-              ),
-              "Tổng số đã giao": st.column_config.NumberColumn(
-                  "Tổng số đã giao", format="%d"
-              ),
-          },
-          use_container_width=True,
-          hide_index=True,
-          height=480,
-      )
+      if filter_phan_he != "Tất cả" and "phan_he" in df_coois_view.columns:
+        target_ph = phan_he_code_map.get(filter_phan_he)
+        df_coois_view = df_coois_view[df_coois_view["phan_he"] == target_ph]
 
-      # Nút xuất Excel riêng cho Bảng Lệnh
-      buf_lenh = io.BytesIO()
-      with pd.ExcelWriter(buf_lenh, engine="openpyxl") as writer:
-        df_lenh_display.to_excel(
-            writer, sheet_name="DanhSach_Lenh_COOIS", index=False
+      if "sl_tong" in df_coois_view.columns and "sl_ht" in df_coois_view.columns:
+        if filter_status == "Đã kiểm (Đã UD)":
+          df_coois_view = df_coois_view[df_coois_view["sl_ht"] >= df_coois_view["sl_tong"]]
+        elif filter_status == "Chưa kiểm (Chưa UD)":
+          df_coois_view = df_coois_view[df_coois_view["sl_ht"] < df_coois_view["sl_tong"]]
+
+      if "ma_tp" in df_coois_view.columns:
+        if filter_loai_sp == "Bán thành phẩm (Đầu 5)":
+          df_coois_view = df_coois_view[
+              df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
+          ]
+        elif filter_loai_sp == "Thành phẩm (Khác Đầu 5)":
+          df_coois_view = df_coois_view[
+              ~df_coois_view["ma_tp"].astype(str).str.split(".").str[0].str.lstrip("0").str.startswith("5")
+          ]
+
+      if search_keyword.strip():
+        kw = search_keyword.strip().lower()
+        m1 = df_coois_view["so_lenh"].astype(str).str.lower().str.contains(kw, na=False) if "so_lenh" in df_coois_view.columns else False
+        m2 = df_coois_view["ma_tp"].astype(str).str.lower().str.contains(kw, na=False) if "ma_tp" in df_coois_view.columns else False
+        m3 = df_coois_view["ten_tp"].astype(str).str.lower().str.contains(kw, na=False) if "ten_tp" in df_coois_view.columns else False
+        df_coois_view = df_coois_view[m1 | m2 | m3]
+
+      if not df_coois_view.empty:
+        df_lenh_display = pd.DataFrame()
+        df_lenh_display["STT"] = np.arange(1, len(df_coois_view) + 1)
+        df_lenh_display["Ngày tháng năm"] = df_coois_view["ngay_lenh_format"].values
+        df_lenh_display["Lệnh"] = df_coois_view["so_lenh"].values if "so_lenh" in df_coois_view.columns else ""
+        df_lenh_display["Mã sản phẩm"] = df_coois_view["ma_tp"].values if "ma_tp" in df_coois_view.columns else ""
+        df_lenh_display["Tên sản phẩm"] = df_coois_view["ten_tp"].values if "ten_tp" in df_coois_view.columns else ""
+        df_lenh_display["Tổng số lượng"] = df_coois_view["sl_tong"].values if "sl_tong" in df_coois_view.columns else 0
+        df_lenh_display["Tổng số đã giao"] = df_coois_view["sl_ht"].values if "sl_ht" in df_coois_view.columns else 0
+        df_lenh_display["Text ghi chú"] = (
+            df_coois_view["ghi_chu"].values
+            if "ghi_chu" in df_coois_view.columns
+            else (df_coois_view["phan_he"].values if "phan_he" in df_coois_view.columns else "")
         )
-      st.download_button(
-          label="📥 Xuất Bảng Lệnh Kiểm Tra (Excel)",
-          data=buf_lenh.getvalue(),
-          file_name=f"DanhSach_Lenh_COOIS_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-          mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-          type="primary",
-      )
+
+        st.markdown(f"##### ⚙️ Danh Sách Lệnh Kiểm Tra / Sản Xuất ({len(df_lenh_display):,} bản ghi)")
+        st.dataframe(
+            df_lenh_display,
+            column_config={
+                "STT": st.column_config.NumberColumn("STT", width="small"),
+                "Tổng số lượng": st.column_config.NumberColumn(
+                    "Tổng số lượng", format="%d"
+                ),
+                "Tổng số đã giao": st.column_config.NumberColumn(
+                    "Tổng số đã giao", format="%d"
+                ),
+            },
+            use_container_width=True,
+            hide_index=True,
+            height=480,
+        )
+
+        buf_lenh = io.BytesIO()
+        with pd.ExcelWriter(buf_lenh, engine="openpyxl") as writer:
+          df_lenh_display.to_excel(
+              writer, sheet_name="DanhSach_Lenh_COOIS", index=False
+          )
+        st.download_button(
+            label="📥 Xuất Bảng Lệnh Kiểm Tra (Excel)",
+            data=buf_lenh.getvalue(),
+            file_name=f"DanhSach_Lenh_COOIS_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            type="primary",
+        )
+      else:
+        st.warning("⚠️ Không tìm thấy bản ghi lệnh nào phù hợp với bộ lọc.")
     else:
-      st.warning("⚠️ Không tìm thấy bản ghi lệnh nào phù hợp với bộ lọc.")
+      st.info("💡 Chưa có dữ liệu lệnh sản xuất.")
 
 
-# ================= 8. RENDER NỘI DUNG CÁC TAB BÁO CÁO CŨ =================
+# ================= 8. RENDER NỘI DUNG CÁC TAB BÁO CÁO =================
 with tab_co_khi:
   render_coois_tab_layout("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
 with tab_tuti:
