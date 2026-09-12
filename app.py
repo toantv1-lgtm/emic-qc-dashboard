@@ -54,7 +54,6 @@ st.markdown(
             background-color: var(--bg) !important;
             color: var(--text);
         }
-        html, body { overflow-x: hidden; overflow-y: auto !important; height: auto !important; }
         h1, h2, h3, h4, h5, h6, p, span, div { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
 
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
@@ -63,11 +62,6 @@ st.markdown(
             padding-left: 1.8rem !important;
             padding-right: 1.8rem !important;
             max-width: 100% !important;
-            width: 100% !important;
-            overflow: visible !important;
-        }
-        [data-testid="stAppViewContainer"], [data-testid="stMain"] {
-            overflow: visible !important; height: auto !important;
         }
 
         /* ============ SIDEBAR ============ */
@@ -273,7 +267,7 @@ PLOTLY_AXIS_TEXT = "#6B7280"
 
 # Cấu hình Matplotlib phông Calibri (dùng riêng cho ảnh chèn Excel - chuẩn in ấn văn phòng)
 plt.rcParams["font.family"] = "sans-serif"
-plt.rcParams["font.sans-serif"] = ["Calibri", "Arial", "sans-serif"]
+plt.rcParams["font.sans-serif"] = ["Calibri", "Arial", "DejaVu Sans", "sans-serif"]
 plt.rcParams["font.size"] = 9
 plt.rcParams["axes.unicode_minus"] = False
 plt.rcParams["axes.edgecolor"] = "#CBD5E1"
