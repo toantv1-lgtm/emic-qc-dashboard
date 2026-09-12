@@ -1,16 +1,19 @@
 from datetime import date, datetime
+import io
 import os
 import re
 import sqlite3
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
+import openpyxl
+from openpyxl.drawing.image import Image as OpenpyxlImage
 import pandas as pd
 import streamlit as st
 
-# ================= 1. BỘ CSS TRIỆT TIỆU TOÀN BỘ KHOẢNG THỪA =================
+# ================= 1. CẤU HÌNH DASHBOARD & CSS CẮT LỀ THỪA =================
 st.set_page_config(
-    page_title="EMIC QC Dashboard",
+    page_title="EMIC QC Dashboard Pro",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded",
@@ -19,12 +22,8 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Ẩn Header Streamlit */
-        header[data-testid="stHeader"] {
-            display: none !important;
-        }
+        header[data-testid="stHeader"] { display: none !important; }
         
-        /* Triệt tiêu lề đỉnh và lề đáy trang */
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
             padding-top: 0.2rem !important;
             padding-bottom: 0.2rem !important;
@@ -38,7 +37,7 @@ st.markdown(
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* Nút Navigation Tabs sát đỉnh */
+        /* Tabs Navigation Căn Giữa */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: center !important;
             gap: 6px !important;
@@ -61,7 +60,7 @@ st.markdown(
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.25) !important;
         }
         
-        /* Đóng khung chuẩn cho các Card chứa biểu đồ, giảm padding xuống 6px */
+        /* Khung Card Biểu Đồ */
         div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
             background-color: #FFFFFF;
             border-radius: 8px;
@@ -70,7 +69,6 @@ st.markdown(
             box-shadow: 0 1px 2px rgba(0,0,0,0.02);
         }
 
-        /* Giảm khoảng cách giữa các hàng */
         div[data-testid="stVerticalBlock"] > div {
             gap: 0.3rem !important;
         }
@@ -163,7 +161,44 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= 2. SIDEBAR BỘ LỌC NGÀY =================
+# ================= 2. HÀM XUẤT EXCEL CHUYÊN NGHIỆP TÍCH HỢP HÌNH ẢNH =================
+def export_excel_report(
+    ph_name, df_m, df_plan, df_fam, df_yr, fig1, fig2, fig3, fig4
+):
+  output = io.BytesIO()
+
+  with pd.ExcelWriter(output, engine="openpyxl") as writer:
+    df_m.to_excel(writer, sheet_name="TienDo_Thang", index=False)
+    df_plan.to_excel(writer, sheet_name="TongQuan_KeHoach", index=False)
+    df_fam.to_excel(writer, sheet_name="Dong_SanPham", index=False)
+    df_yr.to_excel(writer, sheet_name="SanLuong_CaNam", index=False)
+
+  output.seek(0)
+  wb = openpyxl.load_workbook(output)
+  ws_img = wb.create_sheet(title="BieuDo_Visual")
+
+  figs = [
+      (fig1, "B2", "Tiến độ sản xuất"),
+      (fig2, "K2", "Tỷ lệ hoàn thành tổng quan"),
+      (fig3, "B20", "Sản lượng dòng sản phẩm"),
+      (fig4, "K20", "Tổng sản lượng cả năm mã đầu 5"),
+  ]
+
+  for fig, cell, title in figs:
+    img_buf = io.BytesIO()
+    fig.savefig(
+        img_buf, format="png", dpi=200, bbox_inches="tight", facecolor="#FFFFFF"
+    )
+    img_buf.seek(0)
+    img = OpenpyxlImage(img_buf)
+    ws_img.add_image(img, cell)
+
+  final_out = io.BytesIO()
+  wb.save(final_out)
+  return final_out.getvalue()
+
+
+# ================= 3. SIDEBAR BỘ LỌC DỮ LIỆU =================
 st.sidebar.title("🎛️ BỘ LỌC DỮ LIỆU")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
@@ -172,13 +207,13 @@ with col_den:
   den_date = st.date_input("Đến ngày", date.today())
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", use_container_width=True):
+if st.sidebar.button("🔄 Cập Nhật Dữ Liệu", use_container_width=True):
   st.cache_data.clear()
   st.rerun()
 
 df_qa32, df_coois = load_data(tu_date, den_date)
 
-# ================= 3. BỘ NÚT NAVIGATION TABS =================
+# ================= 4. NAVIGATION TABS CĂN GIỮA =================
 tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
     "📋 Báo Cáo Vật Tư",
     "⚙️ Báo Cáo Cơ Khí",
@@ -186,7 +221,7 @@ tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
     "⚡ Báo Cáo Công Tơ",
 ])
 
-# ================= 4. TAB 1: BÁO CÁO VẬT TƯ =================
+# ================= 5. TAB 1: BÁO CÁO VẬT TƯ =================
 with tab_vat_tu:
   if df_qa32.empty:
     st.info("💡 Chưa có dữ liệu QA32 trong khoảng thời gian đã chọn.")
@@ -314,7 +349,7 @@ with tab_vat_tu:
     col1, col2 = st.columns([2.2, 1.0])
 
     with col1:
-      fig1 = plt.figure(figsize=(8.0, 2.5), dpi=150)
+      fig1 = plt.figure(figsize=(8.0, 2.8), dpi=150)
       fig1.patch.set_facecolor(Theme.SURFACE)
 
       ax1 = fig1.add_subplot(111)
@@ -438,7 +473,7 @@ with tab_vat_tu:
       st.pyplot(fig1, use_container_width=True)
 
     with col2:
-      fig_pie = plt.figure(figsize=(3.2, 2.5), dpi=150)
+      fig_pie = plt.figure(figsize=(3.2, 2.8), dpi=150)
       fig_pie.patch.set_facecolor(Theme.SURFACE)
       ax_pie = fig_pie.add_subplot(111)
       ax_pie.set_facecolor(Theme.SURFACE)
@@ -525,7 +560,7 @@ with tab_vat_tu:
       st.dataframe(df_block, use_container_width=True, hide_index=True)
 
 
-# ================= 5. HÀM CHUNG CHO CÁC TAB COOIS =================
+# ================= 6. HÀM CHUNG CHO CÁC TAB COOIS QUY CHUẨN CHIỀU CAO & EXCEL =================
 def render_coois_tab_layout(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -567,11 +602,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
   title_clean = clean_emoji(title_text)
 
-  # HÀNG 1: BIỂU ĐỒ SẢN XUẤT THÁNG (CỘT RỘNG 2.2) & DONUT (CỘT NHỎ 1.0)
+  # HÀNG 1: [CỘT 1: TIẾN ĐỘ THÁNG (2.8 in)] & [CỘT 2: DONUT KHÓA TỶ LỆ (2.8 in)]
   col1, col2 = st.columns([2.2, 1.0])
 
   with col1:
-    fig1, ax1 = plt.subplots(figsize=(7.5, 2.5), dpi=150)
+    fig1, ax1 = plt.subplots(figsize=(7.5, 2.8), dpi=150)
     fig1.patch.set_facecolor(Theme.SURFACE)
     ax1.set_facecolor(Theme.SURFACE)
     ax2 = ax1.twinx()
@@ -673,7 +708,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     st.pyplot(fig1, use_container_width=True)
 
   with col2:
-    fig2, ax3 = plt.subplots(figsize=(3.2, 2.5), dpi=150)
+    fig2, ax3 = plt.subplots(figsize=(3.2, 2.8), dpi=150)
     fig2.patch.set_facecolor(Theme.SURFACE)
     ax3.set_facecolor(Theme.SURFACE)
 
@@ -729,7 +764,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     fig2.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.94)
     st.pyplot(fig2, use_container_width=True)
 
-  # HÀNG 2: BỘ LỌC DÒNG SP NẰM NGOÀI TRÁNH TẠO Ô THỪA VÀ 2 CỘT CÂN BẰNG THẲNG HÀNG
+  # HÀNG 2: [CỘT LỌC DÒNG SP NẰM ĐẦU TRÁNH LỆCH]
   sub_5 = (
       df_sub[
           df_sub["ma_tp"]
@@ -757,14 +792,13 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
-  # Ô LỌC TRỰC TIẾP KHÔNG QUA COLUMNS RỖNG (TRIỆT TIỆU Ô TRẮNG THỪA)
   sel_fam = st.selectbox(
       "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
   )
 
   col3, col4 = st.columns([1, 1])
 
-  # --- DƯỚI TRÁI: BIỂU ĐỒ SẢN LƯỢNG DÒNG SP ---
+  # --- DƯỚI TRÁI: SẢN LƯỢNG DÒNG SP (2.8 in) ---
   with col3:
     m3_qty = [0.0] * 12
     if not sub_5.empty:
@@ -784,7 +818,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
     defect_rate_m = [0.0] * 12
 
-    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.3), dpi=150)
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.8), dpi=150)
     fig3.patch.set_facecolor(Theme.SURFACE)
     ax_b3.set_facecolor(Theme.SURFACE)
 
@@ -827,29 +861,29 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     ax_b3.set_xticks(x)
-    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=7.5)
+    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
     ax_b3.set_xlim(-0.6, 11.6)
     ax_b3.set_ylabel(
-        "SL Hoàn Thành [Log]", fontweight="bold", color=COLOR_PRIMARY, fontsize=7.5
+        "SL Hoàn Thành [Log]", fontweight="bold", color=COLOR_PRIMARY, fontsize=8
     )
     ax_b3_right.set_ylabel(
-        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=7.5
+        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=8
     )
     ax_b3_right.set_ylim(-1.0, 5.0)
     ax_b3.set_title(
         f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
         fontweight="bold",
-        fontsize=9,
+        fontsize=9.5,
         color=Theme.TEXT_PRIMARY,
-        pad=6,
+        pad=10,
     )
 
-    fig3.subplots_adjust(top=0.86, bottom=0.20, left=0.10, right=0.90)
+    fig3.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
     st.pyplot(fig3, use_container_width=True)
 
-  # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG MÃ ĐẦU 5 ---
+  # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG MÃ ĐẦU 5 CẢ NĂM (2.8 in) ---
   with col4:
-    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.3), dpi=150)
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.8), dpi=150)
     fig4.patch.set_facecolor(Theme.SURFACE)
     ax_b4.set_facecolor(Theme.SURFACE)
 
@@ -922,27 +956,111 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     ax_b4.set_xticks(x_b4)
-    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=7.5)
+    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=8)
     ax_b4.set_ylabel(
-        "Số Lượng SP [Log]", fontweight="bold", color=COLOR_SUCCESS, fontsize=7.5
+        "Số Lượng SP [Log]", fontweight="bold", color=COLOR_SUCCESS, fontsize=8
     )
     ax_b4_right.set_ylabel(
-        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=7.5
+        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=8
     )
     ax_b4_right.set_ylim(-1.0, 5.0)
     ax_b4.set_title(
         "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
         fontweight="bold",
-        fontsize=9,
+        fontsize=9.5,
         color=Theme.TEXT_PRIMARY,
-        pad=6,
+        pad=10,
     )
 
-    fig4.subplots_adjust(top=0.86, bottom=0.20, left=0.10, right=0.90)
+    fig4.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
     st.pyplot(fig4, use_container_width=True)
 
+  # ================= 7. BỔ SUNG 4 BẢNG DỮ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL =================
+  st.markdown("---")
+  col_hdr, col_btn = st.columns([3, 1])
+  with col_hdr:
+    st.markdown(
+        f"### 📑 BẢNG TỔNG HỢP DỮ LIỆU CHI TIẾT - {title_clean.upper()}"
+    )
 
-# ================= 6. RENDER NỘI DUNG CÁC TAB =================
+  # Tạo DataFrames cho 4 bảng tổng hợp
+  df_monthly_summary = pd.DataFrame({
+      "Tháng": months_labels,
+      "Lệnh Hoàn Thành": m_comp_orders,
+      "Lệnh Chưa Xong": m_uncomp_orders,
+      "SL Hoàn Thành": [int(v) for v in m_comp_qty],
+      "SL Chưa Xong": [int(v) for v in m_uncomp_qty],
+      "Tỷ Lệ HT (%)": [
+          f"{(m_comp_qty[i]/(m_comp_qty[i]+m_uncomp_qty[i])*100):.1f}%"
+          if (m_comp_qty[i] + m_uncomp_qty[i]) > 0
+          else "0%"
+          for i in range(12)
+      ],
+  })
+
+  df_plan_summary = pd.DataFrame({
+      "Chỉ Tiêu": ["Tổng Kế Hoạch", "Đã Giao Hoàn Thành", "Còn Lại Chưa Xong"],
+      "Số Lượng": [
+          f"{int(tot_qty_all):,}",
+          f"{int(deliv_qty_all):,}",
+          f"{int(rem_qty_all):,}",
+      ],
+      "Tỷ Lệ %": [
+          "100.0%",
+          f"{(deliv_qty_all/tot_qty_all*100):.1f}%" if tot_qty_all > 0 else "0%",
+          f"{(rem_qty_all/tot_qty_all*100):.1f}%" if tot_qty_all > 0 else "0%",
+      ],
+  })
+
+  df_family_summary = pd.DataFrame({
+      "Tháng": months_labels,
+      f"SL Sản Xuất ({sel_fam})": [int(v) for v in m3_qty],
+  })
+
+  df_year_summary = pd.DataFrame({
+      "Mã / Dòng SP": fams_x,
+      "Tổng SL Hoàn Thành Cả Năm": [int(v) for v in deliv_fams],
+  })
+
+  with col_btn:
+    excel_bytes = export_excel_report(
+        phan_he_code,
+        df_monthly_summary,
+        df_plan_summary,
+        df_family_summary,
+        df_year_summary,
+        fig1,
+        fig2,
+        fig3,
+        fig4,
+    )
+    st.download_button(
+        label="📥 Xuất Báo Cáo Excel Pro (Có Biểu Đồ)",
+        data=excel_bytes,
+        file_name=f"BaoCao_{phan_he_code}_{datetime.now().strftime('%Y%m%d')}.xlsx",
+        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        use_container_width=True,
+    )
+
+  # Hiển thị 4 Bảng Dữ Liệu
+  t_col1, t_col2 = st.columns([1.5, 1.0])
+  with t_col1:
+    st.markdown("##### 1. Tiến Độ Sản Xuất Theo Tháng")
+    st.dataframe(df_monthly_summary, use_container_width=True, hide_index=True)
+  with t_col2:
+    st.markdown("##### 2. Tổng Quan Chỉ Tiêu Kế Hoạch")
+    st.dataframe(df_plan_summary, use_container_width=True, hide_index=True)
+
+  t_col3, t_col4 = st.columns([1.0, 1.0])
+  with t_col3:
+    st.markdown(f"##### 3. Chi Tiết Sản Lượng Dòng SP ({sel_fam})")
+    st.dataframe(df_family_summary, use_container_width=True, hide_index=True)
+  with t_col4:
+    st.markdown("##### 4. Tổng Sản Lượng Cả Năm Các Mã Đầu 5")
+    st.dataframe(df_year_summary, use_container_width=True, hide_index=True)
+
+
+# ================= 8. RENDER NỘI DUNG CÁC TAB =================
 with tab_co_khi:
   render_coois_tab_layout("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
 with tab_tuti:
