@@ -11,11 +11,9 @@ from openpyxl.drawing.image import Image as OpenpyxlImage
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 import pandas as pd
-import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD & CSS =================
+# ================= 1. CẤU HÌNH DASHBOARD & BỘ STYLE CSS CHUẨN DESKTOP =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -41,7 +39,7 @@ st.markdown(
             font-family: system-ui, -apple-system, sans-serif;
         }
 
-        /* Tabs Navigation Căn Giữa Đỉnh Trang */
+        /* Styling Tabs Navigation Căn Giữa Đỉnh Trang */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: center !important;
             gap: 8px !important;
@@ -64,12 +62,12 @@ st.markdown(
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
         }
         
-        /* Card Khung Bao Cho Biểu Đồ */
+        /* Card Khung Bao Cho Từng Biểu Đồ (Khắc Phục Ô Trắng Thừa) */
         .chart-card {
             background-color: #FFFFFF;
             border-radius: 10px;
             border: 1px solid #CBD5E1;
-            padding: 6px 10px;
+            padding: 8px 12px;
             box-shadow: 0 1px 3px rgba(0,0,0,0.02);
             margin-bottom: 8px;
         }
@@ -87,13 +85,26 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-# Bảng Màu Chuẩn Gốc 100%
-COLOR_SUCCESS = "#10B981"  # Xanh lá (UD01 / SL Hoàn thành)
-COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh HT / Hàng về FT)
-COLOR_DANGER = "#EF4444"  # Đỏ (UD03 / Bị Block / Lệnh chưa xong)
+# Cấu hình Matplotlib Sắc Nét HD
+plt.rcParams["font.family"] = "sans-serif"
+plt.rcParams["font.sans-serif"] = [
+    "DejaVu Sans",
+    "Liberation Sans",
+    "Arial",
+    "sans-serif",
+]
+plt.rcParams["font.size"] = 8
+plt.rcParams["axes.unicode_minus"] = False
+plt.rcParams["axes.edgecolor"] = "#CBD5E1"
+plt.rcParams["axes.linewidth"] = 0.8
+
+# Bảng Màu Chuẩn Nguyên Bản 100%
+COLOR_SUCCESS = "#10B981"  # Xanh lá (UD01 / SL Hoàn thành / Đạt)
+COLOR_PRIMARY = "#3B82F6"  # Xanh dương (Lệnh Hoàn Thành / FT)
+COLOR_DANGER = "#EF4444"  # Đỏ (UD03 / Block / Lệnh chưa xong)
 COLOR_WARNING = "#F59E0B"  # Cam (UD02 / SL chưa xong)
-COLOR_PURPLE = "#A855F7"  # Tím (Mẫu BY)
-COLOR_TEXT = "#0F172A"
+COLOR_PURPLE = "#A855F7"  # Tím (BY Sample / PT)
+COLOR_CYAN = "#06B6D4"  # Cyan (VT)
 
 DISTINCT_COLORS = [
     "#3B82F6",
@@ -155,7 +166,7 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= 2. HÀM TẠO FILE EXCEL BÁO CÁO ĐÍNH KÈM HÌNH ẢNH =================
+# ================= 2. HÀM TẠO FILE EXCEL CHUẨN IN ẤN TRÌNH BÀY CHUYÊN NGHIỆP =================
 def generate_print_ready_excel(
     phan_he_code,
     title_clean,
@@ -455,136 +466,193 @@ with tab_vat_tu:
 
     with col1:
       st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-      fig1 = make_subplots(specs=[[{"secondary_y": True}]])
-      fig1.add_trace(
-          go.Bar(
-              x=months_labels,
-              y=ud01_m,
-              name="UD 01 (Đạt)",
-              marker_color=COLOR_SUCCESS,
-          ),
-          secondary_y=False,
+      fig1 = plt.figure(figsize=(8.2, 3.2), dpi=200)
+      fig1.patch.set_facecolor(Theme.SURFACE)
+
+      ax1 = fig1.add_subplot(111)
+      ax1.set_facecolor(Theme.SURFACE)
+      ax2 = ax1.twinx()
+
+      ax1.set_zorder(1)
+      ax2.set_zorder(2)
+      ax1.patch.set_alpha(0.0)
+
+      for spine in ["top"]:
+        ax1.spines[spine].set_visible(False)
+        ax2.spines[spine].set_visible(False)
+
+      x = np.arange(12)
+      w = 0.38
+
+      b_ud01 = ax1.bar(x, ud01_m, width=w, color=COLOR_SUCCESS, label="UD 01 (Đạt)")
+      b_ud02 = ax1.bar(
+          x,
+          ud02_m,
+          width=w,
+          bottom=ud01_m,
+          color=COLOR_WARNING,
+          label="UD 02 (Đặc nhượng)",
       )
-      fig1.add_trace(
-          go.Bar(
-              x=months_labels,
-              y=ud02_m,
-              name="UD 02 (Đặc nhượng)",
-              marker_color=COLOR_WARNING,
-          ),
-          secondary_y=False,
-      )
-      fig1.add_trace(
-          go.Bar(
-              x=months_labels,
-              y=ud03_m,
-              name="UD 03 (Trả lại)",
-              marker_color=COLOR_DANGER,
-          ),
-          secondary_y=False,
+      bot_03 = [ud01_m[i] + ud02_m[i] for i in range(12)]
+      b_ud03 = ax1.bar(
+          x,
+          ud03_m,
+          width=w,
+          bottom=bot_03,
+          color=COLOR_DANGER,
+          label="UD 03 (Trả lại)",
       )
 
-      total_by = [by_inspected_m[i] + by_uninspected_m[i] for i in range(12)]
-      fig1.add_trace(
-          go.Scatter(
-              x=months_labels,
-              y=total_by,
-              name="Số mẫu phải kiểm (BY)",
-              line=dict(color=COLOR_PURPLE, width=2, dash="dash"),
-          ),
-          secondary_y=True,
+      max_order_val = max(
+          [ud01_m[i] + ud02_m[i] + ud03_m[i] for i in range(12)] + [1]
       )
-      fig1.add_trace(
-          go.Scatter(
-              x=months_labels,
-              y=ft_qty_m,
-              name="Tổng số hàng về (FT)",
-              line=dict(color=COLOR_PRIMARY, width=2),
-          ),
-          secondary_y=True,
+      ax1.set_ylim(0, max_order_val * 1.25)
+
+      for i in range(12):
+        un_cnt = uninspected_m[i]
+        if un_cnt > 0:
+          ax1.text(
+              x[i],
+              (ud01_m[i] + ud02_m[i] + ud03_m[i]) + (max_order_val * 0.02),
+              f"{un_cnt}",
+              ha="center",
+              va="bottom",
+              fontweight="bold",
+              fontsize=7,
+              color=COLOR_PURPLE,
+          )
+
+      total_by_sample_m = [
+          by_inspected_m[i] + by_uninspected_m[i] for i in range(12)
+      ]
+      line_ft = ax2.plot(
+          x,
+          ft_qty_m,
+          color=COLOR_PRIMARY,
+          marker="o",
+          linewidth=1.8,
+          label="Tổng số hàng về (FT)",
+      )
+      line_by = ax2.plot(
+          x,
+          total_by_sample_m,
+          color=COLOR_PURPLE,
+          marker="s",
+          linewidth=1.8,
+          linestyle="--",
+          label="Số mẫu phải kiểm (BY)",
       )
 
-      fig1.update_layout(
-          title=dict(
-              text="BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
-              font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-              x=0.5,
-              xanchor="center",
-          ),
-          barmode="stack",
-          margin=dict(l=10, r=10, t=35, b=10),
-          height=280,  # BẰNG CHẰN CHẶN CHIỀU CAO BIỂU ĐỒ QUẠT
-          paper_bgcolor="rgba(0,0,0,0)",
-          plot_bgcolor="rgba(0,0,0,0)",
-          legend=dict(
-              orientation="h",
-              yanchor="top",
-              y=-0.18,
-              xanchor="center",
-              x=0.5,
-              font=dict(size=9),
-          ),
+      ax2.set_yscale("symlog", linthresh=100)
+      ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+      ax1.set_xticks(x)
+      ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+      ax1.set_xlim(-0.6, 11.6)
+      ax1.set_ylabel(
+          "← Số Lượng Lệnh (Trục Trái)",
+          fontweight="bold",
+          color=COLOR_SUCCESS,
+          fontsize=8,
       )
-      fig1.update_xaxes(showgrid=False, tickfont=dict(size=10))
-      fig1.update_yaxes(
-          title_text="← Số Lượng Lệnh",
-          title_font=dict(size=10, color=COLOR_SUCCESS),
-          secondary_y=False,
-          showgrid=True,
-          gridcolor="#E2E8F0",
+      ax2.set_ylabel(
+          "Số Lượng Vật Tư / Mẫu [Log] (Trục Phải) →",
+          fontweight="bold",
+          color=COLOR_PRIMARY,
+          fontsize=8,
       )
-      fig1.update_yaxes(
-          title_text="Số Lượng Vật Tư / Mẫu [Log] →",
-          title_font=dict(size=10, color=COLOR_PRIMARY),
-          type="log",
-          secondary_y=True,
-          showgrid=False,
+      ax1.set_title(
+          "BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
+          fontweight="bold",
+          fontsize=9.5,
+          color=Theme.TEXT_PRIMARY,
+          pad=10,
       )
 
-      st.plotly_chart(
-          fig1, use_container_width=True, config={"displayModeBar": False}
+      all_handles = [b_ud01, b_ud02, b_ud03, line_by[0], line_ft[0]]
+      all_labels = [
+          "UD 01 (Đạt)",
+          "UD 02 (Đặc nhượng)",
+          "UD 03 (Trả lại)",
+          "Số mẫu phải kiểm (BY)",
+          "Tổng số hàng về (FT)",
+      ]
+      ax1.legend(
+          all_handles,
+          all_labels,
+          loc="upper center",
+          bbox_to_anchor=(0.5, -0.18),
+          frameon=False,
+          fontsize=7.5,
+          ncol=3,
       )
+
+      fig1.subplots_adjust(
+          top=0.88, bottom=0.20, left=0.08, right=0.92, wspace=0.15
+      )
+      st.pyplot(fig1, use_container_width=True)
       st.markdown("</div>", unsafe_allow_html=True)
 
     with col2:
       st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+      fig_pie = plt.figure(figsize=(3.8, 3.2), dpi=200)
+      fig_pie.patch.set_facecolor(Theme.SURFACE)
+      ax_pie = fig_pie.add_subplot(111)
+      ax_pie.set_facecolor(Theme.SURFACE)
+
+      ax_pie.set_aspect("equal")
+
       ok_cnt = max(0.0, total_ft_all - total_ca_block)
-      fig2 = go.Figure(
-          data=[
-              go.Pie(
-                  labels=["Vật tư Đạt", "Bị Block (Lỗi)"],
-                  values=[ok_cnt, total_ca_block],
-                  hole=0.55,
-                  marker_colors=[COLOR_SUCCESS, COLOR_DANGER],
-                  textinfo="label+percent",
-                  insidetextorientation="radial",
-              )
-          ]
+      pct_ok = (ok_cnt / total_ft_all * 100) if total_ft_all > 0 else 0
+      pct_block = (
+          (total_ca_block / total_ft_all * 100) if total_ft_all > 0 else 0
       )
-      fig2.update_layout(
-          title=dict(
-              text="TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
-              font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-              x=0.5,
-              xanchor="center",
-          ),
-          margin=dict(l=10, r=10, t=35, b=10),
-          height=280,  # CHIỀU CAO CHUẨN 280
-          paper_bgcolor="rgba(0,0,0,0)",
-          showlegend=False,
-          annotations=[
-              dict(
-                  text=f"TỔNG VẬT TƯ VỀ<br><b>{int(total_ft_all):,}</b>",
-                  x=0.5,
-                  y=0.5,
-                  font_size=10,
-                  showarrow=False,
-              )
-          ],
+
+      if total_ft_all > 0:
+        wedges, texts = ax_pie.pie(
+            [ok_cnt, total_ca_block],
+            labels=[
+                f"Vật tư Đạt\n{ok_cnt:,.0f}\n{pct_ok:.1f}%",
+                f"Bị Block (Lỗi)\n{total_ca_block:,.0f}\n{pct_block:.1f}%",
+            ],
+            colors=[COLOR_SUCCESS, COLOR_DANGER],
+            startangle=140,
+            pctdistance=0.6,
+            labeldistance=1.18,
+            radius=0.82,
+            wedgeprops=dict(width=0.35, edgecolor="white", linewidth=2),
+        )
+        texts[0].set_color(COLOR_SUCCESS)
+        texts[0].set_fontweight("bold")
+        texts[0].set_fontsize(7.5)
+        if len(texts) > 1:
+          texts[1].set_color(COLOR_DANGER)
+          texts[1].set_fontweight("bold")
+          texts[1].set_fontsize(7.5)
+
+        ax_pie.text(
+            0,
+            0,
+            f"TỔNG VẬT TƯ VỀ\n{total_ft_all:,.0f}",
+            ha="center",
+            va="center",
+            fontweight="bold",
+            fontsize=8,
+            color=Theme.TEXT_PRIMARY,
+        )
+      else:
+        ax_pie.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8)
+        ax_pie.axis("off")
+
+      ax_pie.set_title(
+          "TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
+          fontweight="bold",
+          fontsize=9.5,
+          color=Theme.TEXT_PRIMARY,
+          pad=10,
       )
-      st.plotly_chart(
-          fig2, use_container_width=True, config={"displayModeBar": False}
-      )
+      fig_pie.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.94)
+      st.pyplot(fig_pie, use_container_width=True)
       st.markdown("</div>", unsafe_allow_html=True)
 
     sorted_blocks = sorted(
@@ -616,7 +684,7 @@ with tab_vat_tu:
       st.dataframe(df_block, use_container_width=True, hide_index=True)
 
 
-# ================= 6. HÀM CHUNG BÁO CÁO COOIS (ĐỘNG PLOTLY + BẢNG SỐ LIỆU + XUẤT EXCEL CHUẨN A4) =================
+# ================= 6. HÀM CHUNG BÁO CÁO COOIS (QUY CHUẨN CHIỀU CAO BẰNG CHẰN CHẶN) =================
 def render_coois_tab_layout(phan_he_code, title_text):
   df_sub = (
       df_coois[df_coois["phan_he"] == phan_he_code]
@@ -658,138 +726,177 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
   title_clean = clean_emoji(title_text)
 
-  # HÀNG 1: TIẾN ĐỘ SẢN XUẤT (CỘT 2.1) & DONUT CHART (CỘT 1.0) - CÙNG CHIỀU CAO 280px
+  # HÀNG 1: TIẾN ĐỘ SẢN XUẤT (2.1) & DONUT CHART (1.0) - CÙNG FIGSIZE (..., 3.1)
   col1, col2 = st.columns([2.1, 1.0])
 
   with col1:
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
-    fig1 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig1, ax1 = plt.subplots(figsize=(7.8, 3.1), dpi=200)
+    fig1.patch.set_facecolor(Theme.SURFACE)
+    ax1.set_facecolor(Theme.SURFACE)
+    ax2 = ax1.twinx()
+
+    for spine in ["top"]:
+      ax1.spines[spine].set_visible(False)
+      ax2.spines[spine].set_visible(False)
+
+    x = np.arange(12)
+    w = 0.35
     m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
 
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_comp_orders,
-            name="Lệnh Hoàn Thành",
-            marker_color=COLOR_PRIMARY,
-        ),
-        secondary_y=False,
+    ax1.bar(
+        x - w / 2,
+        m_comp_orders,
+        width=w,
+        color=COLOR_PRIMARY,
+        label="Lệnh Hoàn Thành",
     )
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_uncomp_orders,
-            name="Lệnh Chưa Xong",
-            marker_color=COLOR_DANGER,
-        ),
-        secondary_y=False,
-    )
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_comp_qty,
-            name="SL Hoàn Thành",
-            marker_color=COLOR_SUCCESS,
-        ),
-        secondary_y=True,
-    )
-    fig1.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m_uncomp_qty,
-            name="SL Chưa Xong",
-            marker_color=COLOR_WARNING,
-        ),
-        secondary_y=True,
+    ax1.bar(
+        x - w / 2,
+        m_uncomp_orders,
+        width=w,
+        bottom=m_comp_orders,
+        color=COLOR_DANGER,
+        label="Lệnh Chưa Xong",
     )
 
-    fig1.update_layout(
-        title=dict(
-            text=f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
-            font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-            x=0.5,
-            xanchor="center",
-        ),
-        barmode="stack",
-        margin=dict(l=10, r=10, t=35, b=10),
-        height=280,  # BẰNG CHẰN CHẶN
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        legend=dict(
-            orientation="h",
-            yanchor="top",
-            y=-0.18,
-            xanchor="center",
-            x=0.5,
-            font=dict(size=9),
-        ),
+    ax2.bar(
+        x + w / 2,
+        m_comp_qty,
+        width=w,
+        color=COLOR_SUCCESS,
+        label="SL Hoàn Thành",
     )
-    fig1.update_xaxes(showgrid=False, tickfont=dict(size=10))
-    fig1.update_yaxes(
-        title_text="← Tổng Lệnh",
-        title_font=dict(size=10, color=COLOR_PRIMARY),
-        secondary_y=False,
-        showgrid=True,
-        gridcolor="#E2E8F0",
-    )
-    fig1.update_yaxes(
-        title_text="Số Lượng Giao [Log] →",
-        title_font=dict(size=10, color=COLOR_SUCCESS),
-        type="log",
-        secondary_y=True,
-        showgrid=False,
+    ax2.bar(
+        x + w / 2,
+        m_uncomp_qty,
+        width=w,
+        bottom=m_comp_qty,
+        color=COLOR_WARNING,
+        label="SL Chưa Xong",
     )
 
-    st.plotly_chart(
-        fig1, use_container_width=True, config={"displayModeBar": False}
+    ax2.set_yscale("symlog", linthresh=100)
+    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_q = max([m_comp_qty[i] + m_uncomp_qty[i] for i in range(12)] + [100])
+    ax2.set_ylim(0, max_q * 3.2)
+
+    for i in range(12):
+      t_qty = m_comp_qty[i] + m_uncomp_qty[i]
+      pct = (m_comp_qty[i] / t_qty * 100) if t_qty > 0 else 0
+      if t_qty > 0:
+        ax2.text(
+            x[i] + w / 2,
+            t_qty * 1.12,
+            f"{pct:.0f}%",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7,
+            color=COLOR_SUCCESS,
+        )
+
+    ax1.set_title(
+        f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
     )
+    ax1.set_ylabel(
+        "← Tổng Lệnh (Trục Trái)",
+        fontweight="bold",
+        color=COLOR_PRIMARY,
+        fontsize=8,
+    )
+    ax2.set_ylabel(
+        "Số Lượng Giao [Log] (Trục Phải) →",
+        fontweight="bold",
+        color=COLOR_SUCCESS,
+        fontsize=8,
+    )
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+    ax1.set_xlim(-0.6, 11.6)
+
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(
+        lines1 + lines2,
+        labels1 + labels2,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.18),
+        frameon=False,
+        fontsize=7.5,
+        ncol=4,
+    )
+
+    fig1.subplots_adjust(top=0.88, bottom=0.20, left=0.09, right=0.91)
+    st.pyplot(fig1, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
   with col2:
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    fig2, ax3 = plt.subplots(figsize=(3.8, 3.1), dpi=200)
+    fig2.patch.set_facecolor(Theme.SURFACE)
+    ax3.set_facecolor(Theme.SURFACE)
+
+    # KHÓA TỶ LỆ TRÒN NATIVE 1:1 CHỐNG MÉO
+    ax3.set_aspect("equal")
+
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
     pct_deliv = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0
     pct_rem = 100.0 - pct_deliv if tot_qty_all > 0 else 0.0
 
-    fig2 = go.Figure(
-        data=[
-            go.Pie(
-                labels=["Hoàn thành", "Chưa xong"],
-                values=[deliv_qty_all, rem_qty_all],
-                hole=0.55,
-                marker_colors=[COLOR_SUCCESS, COLOR_WARNING],
-                textinfo="label+percent",
-                insidetextorientation="radial",
-            )
-        ]
+    if tot_qty_all > 0:
+      wedges, texts = ax3.pie(
+          [deliv_qty_all, rem_qty_all],
+          labels=[
+              f"Hoàn thành\n{pct_deliv:.1f}%\n({int(deliv_qty_all):,})",
+              f"Chưa xong\n{pct_rem:.1f}%\n({int(rem_qty_all):,})",
+          ],
+          colors=[COLOR_SUCCESS, COLOR_WARNING],
+          startangle=140,
+          pctdistance=0.6,
+          labeldistance=1.18,
+          radius=0.85,
+          wedgeprops=dict(width=0.35, edgecolor="white", linewidth=2),
+      )
+      texts[0].set_color(COLOR_SUCCESS)
+      texts[0].set_fontweight("bold")
+      texts[0].set_fontsize(7.5)
+      if len(texts) > 1:
+        texts[1].set_color(COLOR_DANGER)
+        texts[1].set_fontweight("bold")
+        texts[1].set_fontsize(7.5)
+
+      ax3.text(
+          0,
+          0,
+          f"TỔNG KẾ HOẠCH\n{int(tot_qty_all):,}",
+          ha="center",
+          va="center",
+          fontweight="bold",
+          fontsize=8,
+          color=Theme.TEXT_PRIMARY,
+      )
+    else:
+      ax3.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8)
+      ax3.axis("off")
+
+    ax3.set_title(
+        "TỶ LỆ HOÀN THÀNH TỔNG QUAN",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
     )
-    fig2.update_layout(
-        title=dict(
-            text="TỶ LỆ HOÀN THÀNH TỔNG QUAN",
-            font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-            x=0.5,
-            xanchor="center",
-        ),
-        margin=dict(l=10, r=10, t=35, b=10),
-        height=280,  # BẰNG CHẰN CHẶN
-        paper_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,
-        annotations=[
-            dict(
-                text=f"TỔNG KẾ HOẠCH<br><b>{int(tot_qty_all):,}</b>",
-                x=0.5,
-                y=0.5,
-                font_size=10,
-                showarrow=False,
-            )
-        ],
-    )
-    st.plotly_chart(
-        fig2, use_container_width=True, config={"displayModeBar": False}
-    )
+    fig2.subplots_adjust(top=0.88, bottom=0.08, left=0.06, right=0.94)
+    st.pyplot(fig2, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-  # HÀNG 2: BỘ LỌC ĐẶT NGOÀI & 2 BIỂU ĐỒ BÊN DƯỚI CÂN BẰNG CÙNG CHIỀU CAO 280px
+  # HÀNG 2: BỘ LỌC ĐẶT NGOÀI & 2 ĐỒ THỊ BÊN DƯỚI THẲNG HÀNG 100%
   sub_5 = (
       df_sub[
           df_sub["ma_tp"]
@@ -817,6 +924,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
+  # Ô Lọc Dòng SP Đặt Trực Tiếp (Triệt Tiêu Ô Trắng Thừa)
   sel_fam = st.selectbox(
       "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
   )
@@ -842,46 +950,85 @@ def render_coois_tab_layout(phan_he_code, title_text):
         if pd.notna(m_val) and 1 <= int(m_val) <= 12:
           m3_qty[int(m_val) - 1] += float(r["sl_ht"])
 
-    fig3 = go.Figure()
-    fig3.add_trace(
-        go.Bar(
-            x=months_labels,
-            y=m3_qty,
-            name="SL Sản Xuất",
-            marker_color=COLOR_PRIMARY,
-            text=[f"{int(v):,}" if v > 0 else "" for v in m3_qty],
-            textposition="auto",
+    defect_rate_m = [0.0] * 12
+
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.7), dpi=200)
+    fig3.patch.set_facecolor(Theme.SURFACE)
+    ax_b3.set_facecolor(Theme.SURFACE)
+
+    for spine in ["top"]:
+      ax_b3.spines[spine].set_visible(False)
+    ax_b3_right = ax_b3.twinx()
+    for spine in ["top"]:
+      ax_b3_right.spines[spine].set_visible(False)
+
+    ax_b3.bar(
+        x, m3_qty, width=0.42, color=COLOR_PRIMARY, alpha=0.9, label="SL Sản Xuất"
+    )
+    ax_b3.set_yscale("symlog", linthresh=100)
+    ax_b3.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_v_b3 = max(m3_qty + [100])
+    ax_b3.set_ylim(0, max_v_b3 * 3.2)
+
+    for i in range(12):
+      v = m3_qty[i]
+      if v > 0:
+        ax_b3.text(
+            x[i],
+            v * 1.18,
+            f"{int(v):,}",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7,
+            color=COLOR_PRIMARY,
         )
-    )
-    fig3.update_layout(
-        title=dict(
-            text=f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
-            font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-            x=0.5,
-            xanchor="center",
-        ),
-        margin=dict(l=10, r=10, t=35, b=10),
-        height=280,  # BẰNG CHẰN CHẶN
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,
-    )
-    fig3.update_xaxes(showgrid=False, tickfont=dict(size=10))
-    fig3.update_yaxes(
-        title_text="SL Hoàn Thành [Log]",
-        type="log",
-        showgrid=True,
-        gridcolor="#E2E8F0",
+
+    ax_b3_right.plot(
+        x,
+        defect_rate_m,
+        color=COLOR_DANGER,
+        marker="o",
+        linewidth=1.2,
+        label="Tỷ lệ sai hỏng (%)",
     )
 
-    st.plotly_chart(
-        fig3, use_container_width=True, config={"displayModeBar": False}
+    ax_b3.set_xticks(x)
+    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+    ax_b3.set_xlim(-0.6, 11.6)
+    ax_b3.set_ylabel(
+        "SL Hoàn Thành [Log]", fontweight="bold", color=COLOR_PRIMARY, fontsize=8
     )
+    ax_b3_right.set_ylabel(
+        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=8
+    )
+    ax_b3_right.set_ylim(-1.0, 5.0)
+    ax_b3.set_title(
+        f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+
+    fig3.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
+    st.pyplot(fig3, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-  # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG MÃ ĐẦU 5 ---
+  # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5 ---
   with col4:
     st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.7), dpi=200)
+    fig4.patch.set_facecolor(Theme.SURFACE)
+    ax_b4.set_facecolor(Theme.SURFACE)
+
+    for spine in ["top"]:
+      ax_b4.spines[spine].set_visible(False)
+    ax_b4_right = ax_b4.twinx()
+    for spine in ["top"]:
+      ax_b4_right.spines[spine].set_visible(False)
+
     if not sub_5.empty:
       summary_fams = (
           sub_5.groupby("mat_prefix")[["sl_ht"]].sum().reset_index()
@@ -894,132 +1041,78 @@ def render_coois_tab_layout(phan_he_code, title_text):
           and str(val).strip().lower() not in ["none", "nan"]
       ]
       if not fams_x:
-        fams_x, deliv_fams = ["Trống"], [0.0]
+        fams_x, deliv_fams, defect_fams = ["Trống"], [0.0], [0.0]
       else:
         summary_fams = summary_fams[summary_fams["mat_prefix"].isin(fams_x)]
         fams_x = summary_fams["mat_prefix"].tolist()
         deliv_fams = summary_fams["sl_ht"].values
+        defect_fams = [0.0] * len(fams_x)
     else:
-      fams_x, deliv_fams = ["Không có SP"], [0.0]
+      fams_x, deliv_fams, defect_fams = ["Không có SP"], [0.0], [0.0]
 
+    x_b4 = np.arange(len(fams_x))
     bar_colors = [
         DISTINCT_COLORS[i % len(DISTINCT_COLORS)] for i in range(len(fams_x))
     ]
 
-    fig4 = go.Figure()
-    fig4.add_trace(
-        go.Bar(
-            x=fams_x,
-            y=deliv_fams,
-            marker_color=bar_colors,
-            text=[f"{int(v):,}" if v > 0 else "" for v in deliv_fams],
-            textposition="auto",
+    bars_deliv = ax_b4.bar(
+        x_b4,
+        deliv_fams,
+        width=0.45,
+        label="SL Hoàn Thành Cả Năm",
+        color=bar_colors,
+    )
+    ax_b4.set_yscale("symlog", linthresh=100)
+    ax_b4.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_v_b4 = max(list(deliv_fams) + [100])
+    ax_b4.set_ylim(0, max_v_b4 * 3.5)
+
+    for i in range(len(fams_x)):
+      v = deliv_fams[i]
+      if v > 0:
+        ax_b4.text(
+            x_b4[i],
+            v * 1.18,
+            f"{int(v):,}",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7.5,
+            color=bar_colors[i % len(bar_colors)],
         )
-    )
-    fig4.update_layout(
-        title=dict(
-            text="TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
-            font=dict(size=12, color=COLOR_TEXT, family="sans-serif"),
-            x=0.5,
-            xanchor="center",
-        ),
-        margin=dict(l=10, r=10, t=35, b=10),
-        height=280,  # BẰNG CHẰN CHẶN
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(0,0,0,0)",
-        showlegend=False,
-    )
-    fig4.update_xaxes(showgrid=False, tickfont=dict(size=10))
-    fig4.update_yaxes(
-        title_text="Số Lượng SP [Log]",
-        type="log",
-        showgrid=True,
-        gridcolor="#E2E8F0",
+
+    ax_b4_right.plot(
+        x_b4,
+        defect_fams,
+        color=COLOR_DANGER,
+        marker="s",
+        linewidth=1.2,
+        label="Tỷ lệ sai hỏng (%)",
     )
 
-    st.plotly_chart(
-        fig4, use_container_width=True, config={"displayModeBar": False}
+    ax_b4.set_xticks(x_b4)
+    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=8)
+    ax_b4.set_ylabel(
+        "Số Lượng SP [Log]", fontweight="bold", color=COLOR_SUCCESS, fontsize=8
     )
+    ax_b4_right.set_ylabel(
+        "Sai Hỏng (%)", fontweight="bold", color=COLOR_DANGER, fontsize=8
+    )
+    ax_b4_right.set_ylim(-1.0, 5.0)
+    ax_b4.set_title(
+        "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+
+    fig4.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
+    st.pyplot(fig4, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
-  # ================= 7. TẠO HÌNH ẢNH MATPLOTLIB ĐẦU VÀO ĐỂ XUẤT FILE EXCEL CHUẨN IN A4 =================
-  fig1_mpl, ax_m1 = plt.subplots(figsize=(8, 3.2), dpi=180)
-  ax_m1_twin = ax_m1.twinx()
-  ax_m1.bar(
-      np.arange(12) - 0.18,
-      m_comp_orders,
-      width=0.35,
-      color=COLOR_PRIMARY,
-      label="Lệnh HT",
-  )
-  ax_m1.bar(
-      np.arange(12) - 0.18,
-      m_uncomp_orders,
-      width=0.35,
-      bottom=m_comp_orders,
-      color=COLOR_DANGER,
-      label="Lệnh Chưa Xong",
-  )
-  ax_m1_twin.bar(
-      np.arange(12) + 0.18,
-      m_comp_qty,
-      width=0.35,
-      color=COLOR_SUCCESS,
-      label="SL HT",
-  )
-  ax_m1_twin.bar(
-      np.arange(12) + 0.18,
-      m_uncomp_qty,
-      width=0.35,
-      bottom=m_comp_qty,
-      color=COLOR_WARNING,
-      label="SL Chưa Xong",
-  )
-  ax_m1.set_title(f"TIẾN ĐỘ SẢN XUẤT - {title_clean}", fontweight="bold")
-  ax_m1.set_xticks(np.arange(12))
-  ax_m1.set_xticklabels(months_labels)
-  ax_m1_twin.set_yscale("symlog", linthresh=100)
-  plt.close(fig1_mpl)
-
-  fig2_mpl, ax_m2 = plt.subplots(figsize=(4, 3.2), dpi=180)
-  ax_m2.set_aspect("equal")
-  if tot_qty_all > 0:
-    ax_m2.pie(
-        [deliv_qty_all, rem_qty_all],
-        labels=["Hoàn thành", "Chưa xong"],
-        colors=[COLOR_SUCCESS, COLOR_WARNING],
-        autopct="%1.1f%%",
-        startangle=140,
-        wedgeprops=dict(width=0.35, edgecolor="white"),
-    )
-  ax_m2.set_title("TỶ LỆ HOÀN THÀNH TỔNG QUAN", fontweight="bold")
-  plt.close(fig2_mpl)
-
-  fig3_mpl, ax_m3 = plt.subplots(figsize=(6, 3.0), dpi=180)
-  ax_m3.bar(np.arange(12), m3_qty, width=0.45, color=COLOR_PRIMARY)
-  ax_m3.set_xticks(np.arange(12))
-  ax_m3.set_xticklabels(months_labels)
-  ax_m3.set_yscale("symlog", linthresh=100)
-  ax_b3_title = f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}"
-  ax_m3.set_title(ax_b3_title, fontweight="bold")
-  plt.close(fig3_mpl)
-
-  fig4_mpl, ax_m4 = plt.subplots(figsize=(6, 3.0), dpi=180)
-  ax_m4.bar(
-      np.arange(len(fams_x)),
-      deliv_fams,
-      width=0.45,
-      color=[
-          DISTINCT_COLORS[i % len(DISTINCT_COLORS)] for i in range(len(fams_x))
-      ],
-  )
-  ax_m4.set_xticks(np.arange(len(fams_x)))
-  ax_m4.set_xticklabels(fams_x)
-  ax_m4.set_yscale("symlog", linthresh=100)
-  ax_m4.set_title("TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5", fontweight="bold")
-  plt.close(fig4_mpl)
-
-  # ================= 8. BẢNG SỐ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL CHUẨN IN A4 =================
+  # ================= 7. BẢNG SỐ LIỆU TỔNG HỢP & NÚT XUẤT EXCEL IN A4 =================
   st.markdown("---")
 
   pct_orders_m = [
@@ -1094,10 +1187,10 @@ def render_coois_tab_layout(phan_he_code, title_text):
       df_plan_summary,
       df_family_summary,
       df_year_summary,
-      fig1_mpl,
-      fig2_mpl,
-      fig3_mpl,
-      fig4_mpl,
+      fig1,
+      fig2,
+      fig3,
+      fig4,
   )
 
   with col_btn:
@@ -1110,7 +1203,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         type="primary",
     )
 
-  # HIỂN THỊ 4 BẢNG SỐ LIỆU MÀU SẮC DẠNG PROGRESS BAR
+  # Hiển Thị 4 Bảng Số Liệu Dạng Progress Bar Trực Quan
   t_col1, t_col2 = st.columns([1.6, 1.0])
   with t_col1:
     st.markdown("##### 1. Tiến Độ Sản Xuất Theo Tháng")
@@ -1185,7 +1278,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
 
-# ================= 9. RENDER NỘI DUNG CÁC TAB =================
+# ================= 8. RENDER NỘI DUNG CÁC TAB =================
 with tab_co_khi:
   render_coois_tab_layout("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
 with tab_tuti:
