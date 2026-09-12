@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# ================= 1. CẤU HÌNH DASHBOARD KHÔNG CUỘN MÀN HÌNH =================
+# ================= 1. CẤU HÌNH TRANG & THEME CSS CHUẨN GIAO DIỆN =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -19,63 +19,67 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Ẩn hẳn thanh Header mặc định của Streamlit để tăng diện tích hiển thị */
+        /* Ẩn Header mặc định Streamlit */
         header[data-testid="stHeader"] {
             display: none !important;
         }
         
-        /* Triệt tiêu padding thừa, kéo toàn bộ Dashboard lên đỉnh màn hình */
-        .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 0.3rem !important;
-            padding-bottom: 0.3rem !important;
-            padding-left: 0.8rem !important;
-            padding-right: 0.8rem !important;
+        /* Tối ưu khung nền và lề trang */
+        .stApp {
+            background-color: #F8FAFC;
+            font-family: system-ui, -apple-system, sans-serif;
+        }
+        .main .block-container {
+            padding-top: 0.8rem !important;
+            padding-bottom: 1rem !important;
+            padding-left: 1.2rem !important;
+            padding-right: 1.2rem !important;
             max-width: 100% !important;
         }
 
-        .stApp {
-            background-color: #F1F5F9;
-            font-family: system-ui, -apple-system, sans-serif;
+        /* Styling Nút Navigation Tabs CĂN GIỮA như ảnh mẫu */
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center !important;
+            gap: 10px !important;
+            background-color: transparent !important;
+            padding: 4px 0px 12px 0px !important;
+            border-bottom: 1px solid #E2E8F0 !important;
+        }
+        .stTabs [data-baseweb="tab"] {
+            background-color: #94A3B8 !important; /* Màu xám khi chưa chọn */
+            color: #FFFFFF !important;
+            border-radius: 6px !important;
+            padding: 6px 20px !important;
+            border: none !important;
+            font-weight: 600 !important;
+            font-size: 13px !important;
+        }
+        .stTabs [aria-selected="true"] {
+            background-color: #3B82F6 !important; /* Màu xanh lá/dương khi chọn */
+            color: #FFFFFF !important;
+            box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
         }
         
-        /* Style Sidebar chuyên nghiệp */
-        section[data-testid="stSidebar"] {
-            background-color: #FFFFFF;
-            border-right: 1px solid #CBD5E1;
-        }
-        
-        /* Style Card chứa biểu đồ siêu gọn */
+        /* Styling Card chứa biểu đồ */
         div[data-testid="stColumn"] {
             background-color: #FFFFFF;
-            border-radius: 8px;
-            border: 1px solid #CBD5E1;
-            padding: 6px 10px !important;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            border-radius: 10px;
+            border: 1px solid #E2E8F0;
+            padding: 10px 14px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-
-        /* Tối ưu khoảng cách giữa 2 hàng biểu đồ */
-        div[data-testid="stHorizontalBlock"] {
-            gap: 10px !important;
-            margin-bottom: 6px !important;
-        }
-
-        .header-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #0F172A;
-            margin: 0px 0px 2px 0px !important;
-        }
-        .sub-title {
-            font-size: 11px;
-            color: #64748B;
-            margin-bottom: 6px !important;
+        
+        /* Sidebar styling */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #E2E8F0;
         }
     </style>
 """,
     unsafe_allow_html=True,
 )
 
-# Cấu hình Matplotlib tối ưu cho hiển thị Dashboard nhỏ gọn
+# Cấu hình Matplotlib chuẩn HD & Font
 plt.rcParams["font.family"] = "sans-serif"
 plt.rcParams["font.sans-serif"] = [
     "DejaVu Sans",
@@ -158,482 +162,31 @@ def load_data(tu_date, den_date):
   return df_qa32, df_coois
 
 
-# ================= 2. SIDEBAR CHUYỂN TOÀN BỘ BỘ LỌC VÀ NAVIGATION =================
-st.sidebar.markdown("### 📌 DANH MỤC BÁO CÁO")
-menu_option = st.sidebar.radio(
-    "Chọn phân hệ hiển thị:",
-    [
-        "📋 Báo Cáo Vật Tư",
-        "⚙️ Báo Cáo Cơ Khí",
-        "🔌 Báo Cáo TU/TI",
-        "⚡ Báo Cáo Công Tơ",
-    ],
-    index=2,
-)
-
-st.sidebar.markdown("---")
-st.sidebar.markdown("### 🔍 BỘ LỌC DỮ LIỆU")
+# ================= 2. SIDEBAR BỘ LỌC NGÀY =================
+st.sidebar.title("🎛️ BỘ LỌC DỮ LIỆU")
 col_tu, col_den = st.sidebar.columns(2)
 with col_tu:
   tu_date = st.date_input("Từ ngày", date(datetime.now().year, 1, 1))
 with col_den:
   den_date = st.date_input("Đến ngày", date.today())
 
-df_qa32, df_coois = load_data(tu_date, den_date)
-
-# Đưa ô chọn Dòng SP vào Sidebar nếu ở các phân hệ COOIS
-sel_fam = "Tất cả dòng sản phẩm"
-if menu_option != "📋 Báo Cáo Vật Tư":
-  phan_he_map = {
-      "⚙️ Báo Cáo Cơ Khí": "CO_KHI",
-      "🔌 Báo Cáo TU/TI": "TU_TI",
-      "⚡ Báo Cáo Công Tơ": "CONG_TO",
-  }
-  cur_ph = phan_he_map[menu_option]
-  df_sub_temp = (
-      df_coois[df_coois["phan_he"] == cur_ph]
-      if not df_coois.empty
-      else pd.DataFrame()
-  )
-
-  if not df_sub_temp.empty:
-    sub_5_temp = df_sub_temp[
-        df_sub_temp["ma_tp"]
-        .astype(str)
-        .str.split(".")
-        .str[0]
-        .str.lstrip("0")
-        .str.startswith("5")
-    ]
-    raw_fams = [
-        str(x).strip()
-        for x in sub_5_temp["mat_prefix"].unique()
-        if pd.notna(x)
-        and str(x).strip()
-        and str(x).strip().lower() not in ["none", "nan"]
-    ]
-    available_fams = ["Tất cả dòng sản phẩm"] + sorted(list(set(raw_fams)))
-    sel_fam = st.sidebar.selectbox("🎯 Chọn Dòng SP (Đầu 5):", available_fams)
-
 st.sidebar.markdown("---")
 if st.sidebar.button("🔄 Cập Nhật Lại Báo Cáo", width="stretch"):
   st.cache_data.clear()
   st.rerun()
 
-# ================= 3. HEADER TRANG BÁO CÁO =================
-st.markdown(
-    f'<div class="header-title">EMIC QC - DASHBOARD {clean_emoji(menu_option).upper()}</div>',
-    unsafe_allow_html=True,
-)
-st.markdown(
-    '<div class="sub-title">Báo cáo dữ liệu tổng hợp kho vật tư và tiến độ lệnh'
-    f" sản xuất từ {tu_date.strftime('%d.%m.%Y')} đến"
-    f" {den_date.strftime('%d.%m.%Y')}</div>",
-    unsafe_allow_html=True,
-)
+df_qa32, df_coois = load_data(tu_date, den_date)
 
+# ================= 3. BỘ ĐIỀU HƯỚNG TABS CĂN GIỮA Ở ĐỈNH TRANG =================
+tab_vat_tu, tab_co_khi, tab_tuti, tab_cong_to = st.tabs([
+    "📋 Báo Cáo Vật Tư",
+    "⚙️ Báo Cáo Cơ Khí",
+    "🔌 Báo Cáo TU/TI",
+    "⚡ Báo Cáo Công Tơ",
+])
 
-# ================= 4. HÀM HIỂN THỊ 4 ĐỒ THỊ TRÊN 1 MÀN HÌNH (LƯỚI 2x2) =================
-def render_coois_grid_2x2(phan_he_code, title_text, selected_family):
-  df_sub = (
-      df_coois[df_coois["phan_he"] == phan_he_code]
-      if not df_coois.empty
-      else pd.DataFrame()
-  )
-
-  if df_sub.empty:
-    st.info(f"💡 Chưa có dữ liệu sản xuất cho phân hệ {title_text}.")
-    return
-
-  months_labels = [f"T{i}" for i in range(1, 13)]
-  m_comp_qty, m_uncomp_qty = [0.0] * 12, [0.0] * 12
-  m_tot_orders, m_uncomp_orders = [0] * 12, [0] * 12
-  tot_qty_all, deliv_qty_all = 0.0, 0.0
-
-  for _, r in df_sub.iterrows():
-    try:
-      m_idx = (
-          datetime.strptime(str(r["ngay_lenh_dt"]).split()[0], "%Y-%m-%d").month
-          - 1
-      )
-    except:
-      m_idx = 0
-    if not (0 <= m_idx < 12):
-      m_idx = 0
-
-    sl_t, sl_h = float(r["sl_tong"]), float(r["sl_ht"])
-    uncomp_q = max(0.0, sl_t - sl_h)
-
-    tot_qty_all += sl_t
-    deliv_qty_all += sl_h
-    m_comp_qty[m_idx] += sl_h
-    m_uncomp_qty[m_idx] += uncomp_q
-
-    m_tot_orders[m_idx] += 1
-    if sl_h < sl_t:
-      m_uncomp_orders[m_idx] += 1
-
-  title_clean = clean_emoji(title_text)
-
-  # HÀNG 1: [ĐỒ THỊ 1 - TOP LEFT] & [ĐỒ THỊ 2 - TOP RIGHT]
-  col1, col2 = st.columns([1, 1])
-
-  with col1:
-    fig1, ax1 = plt.subplots(figsize=(5.8, 2.05), dpi=150)
-    fig1.patch.set_facecolor(Theme.SURFACE)
-    ax1.set_facecolor(Theme.SURFACE)
-    ax2 = ax1.twinx()
-
-    for spine in ["top"]:
-      ax1.spines[spine].set_visible(False)
-      ax2.spines[spine].set_visible(False)
-
-    x = np.arange(12)
-    w = 0.35
-    m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
-
-    ax1.bar(
-        x - w / 2,
-        m_comp_orders,
-        width=w,
-        color=Theme.PRIMARY,
-        label="Lệnh Hoàn Thành",
-    )
-    ax1.bar(
-        x - w / 2,
-        m_uncomp_orders,
-        width=w,
-        bottom=m_comp_orders,
-        color=Theme.DANGER,
-        label="Lệnh Chưa Xong",
-    )
-
-    ax2.bar(
-        x + w / 2,
-        m_comp_qty,
-        width=w,
-        color=Theme.SUCCESS,
-        label="SL Hoàn Thành",
-    )
-    ax2.bar(
-        x + w / 2,
-        m_uncomp_qty,
-        width=w,
-        bottom=m_comp_qty,
-        color=Theme.WARNING,
-        label="SL Chưa Xong",
-    )
-
-    ax2.set_yscale("symlog", linthresh=100)
-    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
-
-    max_q = max([m_comp_qty[i] + m_uncomp_qty[i] for i in range(12)] + [100])
-    ax2.set_ylim(0, max_q * 3.0)
-
-    for i in range(12):
-      t_qty = m_comp_qty[i] + m_uncomp_qty[i]
-      pct = (m_comp_qty[i] / t_qty * 100) if t_qty > 0 else 0
-      if t_qty > 0:
-        ax2.text(
-            x[i] + w / 2,
-            t_qty * 1.1,
-            f"{pct:.0f}%",
-            ha="center",
-            va="bottom",
-            fontweight="bold",
-            fontsize=7,
-            color=Theme.SUCCESS,
-        )
-
-    ax1.set_title(
-        f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
-        fontweight="bold",
-        fontsize=8.5,
-        color=Theme.TEXT_PRIMARY,
-        pad=6,
-    )
-    ax1.set_ylabel(
-        "← Tổng Lệnh", fontweight="bold", color=Theme.PRIMARY, fontsize=7.5
-    )
-    ax2.set_ylabel(
-        "Số Lượng Giao [Log] →",
-        fontweight="bold",
-        color=Theme.SUCCESS,
-        fontsize=7.5,
-    )
-    ax1.set_xticks(x)
-    ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=7.5)
-    ax1.set_xlim(-0.6, 11.6)
-
-    lines1, labels1 = ax1.get_legend_handles_labels()
-    lines2, labels2 = ax2.get_legend_handles_labels()
-    ax1.legend(
-        lines1 + lines2,
-        labels1 + labels2,
-        loc="upper center",
-        bbox_to_anchor=(0.5, -0.20),
-        frameon=False,
-        fontsize=7,
-        ncol=4,
-    )
-
-    fig1.subplots_adjust(top=0.88, bottom=0.22, left=0.10, right=0.90)
-    st.pyplot(fig1, width="stretch")
-
-  with col2:
-    fig2, ax3 = plt.subplots(figsize=(5.8, 2.05), dpi=150)
-    fig2.patch.set_facecolor(Theme.SURFACE)
-    ax3.set_facecolor(Theme.SURFACE)
-
-    rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
-    pct_deliv = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0
-    pct_rem = 100.0 - pct_deliv if tot_qty_all > 0 else 0.0
-
-    if tot_qty_all > 0:
-      wedges, texts = ax3.pie(
-          [deliv_qty_all, rem_qty_all],
-          labels=[
-              f"Hoàn thành\n{pct_deliv:.1f}%\n({int(deliv_qty_all):,})",
-              f"Chưa xong\n{pct_rem:.1f}%\n({int(pct_rem):.1f}%)",
-          ],
-          colors=[Theme.SUCCESS, Theme.WARNING],
-          startangle=140,
-          pctdistance=0.6,
-          labeldistance=1.15,
-          radius=0.75,
-          wedgeprops=dict(width=0.32, edgecolor="white", linewidth=1.5),
-      )
-      texts[0].set_color(Theme.SUCCESS)
-      texts[0].set_fontweight("bold")
-      texts[0].set_fontsize(7.5)
-      if len(texts) > 1:
-        texts[1].set_color(Theme.DANGER)
-        texts[1].set_fontweight("bold")
-        texts[1].set_fontsize(7.5)
-
-      ax3.text(
-          0,
-          0,
-          f"TỔNG KẾ HOẠCH\n{int(tot_qty_all):,}",
-          ha="center",
-          va="center",
-          fontweight="bold",
-          fontsize=8,
-          color=Theme.TEXT_PRIMARY,
-      )
-    else:
-      ax3.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8)
-      ax3.axis("off")
-
-    ax3.set_title(
-        "TỶ LỆ HOÀN THÀNH TỔNG QUAN",
-        fontweight="bold",
-        fontsize=8.5,
-        color=Theme.TEXT_PRIMARY,
-        pad=6,
-    )
-    fig2.subplots_adjust(top=0.88, bottom=0.08, left=0.08, right=0.92)
-    st.pyplot(fig2, width="stretch")
-
-  # HÀNG 2: [ĐỒ THỊ 3 - BOT LEFT] & [ĐỒ THỊ 4 - BOT RIGHT]
-  col3, col4 = st.columns([1, 1])
-
-  sub_5 = (
-      df_sub[
-          df_sub["ma_tp"]
-          .astype(str)
-          .str.split(".")
-          .str[0]
-          .str.lstrip("0")
-          .str.startswith("5")
-      ].copy()
-      if not df_sub.empty
-      else pd.DataFrame()
-  )
-
-  with col3:
-    m3_qty = [0.0] * 12
-    if not sub_5.empty:
-      sub_5_df = sub_5.copy()
-      sub_5_df["month"] = pd.to_datetime(
-          sub_5_df["ngay_lenh_dt"], errors="coerce"
-      ).dt.month
-      sub_filtered = (
-          sub_5_df[sub_5_df["mat_prefix"] == selected_family]
-          if selected_family != "Tất cả dòng sản phẩm"
-          else sub_5_df
-      )
-      for _, r in sub_filtered.iterrows():
-        m_val = r["month"]
-        if pd.notna(m_val) and 1 <= int(m_val) <= 12:
-          m3_qty[int(m_val) - 1] += float(r["sl_ht"])
-
-    defect_rate_m = [0.0] * 12
-
-    fig3, ax_b3 = plt.subplots(figsize=(5.8, 2.05), dpi=150)
-    fig3.patch.set_facecolor(Theme.SURFACE)
-    ax_b3.set_facecolor(Theme.SURFACE)
-
-    for spine in ["top"]:
-      ax_b3.spines[spine].set_visible(False)
-    ax_b3_right = ax_b3.twinx()
-    for spine in ["top"]:
-      ax_b3_right.spines[spine].set_visible(False)
-
-    ax_b3.bar(
-        x,
-        m3_qty,
-        width=0.42,
-        color=Theme.PRIMARY,
-        alpha=0.9,
-        label="SL Sản Xuất",
-    )
-    ax_b3.set_yscale("symlog", linthresh=100)
-    ax_b3.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
-
-    max_v_b3 = max(m3_qty + [100])
-    ax_b3.set_ylim(0, max_v_b3 * 3.0)
-
-    for i in range(12):
-      v = m3_qty[i]
-      if v > 0:
-        ax_b3.text(
-            x[i],
-            v * 1.15,
-            f"{int(v):,}",
-            ha="center",
-            va="bottom",
-            fontweight="bold",
-            fontsize=6.8,
-            color=Theme.PRIMARY,
-        )
-
-    ax_b3_right.plot(
-        x,
-        defect_rate_m,
-        color=Theme.DANGER,
-        marker="o",
-        linewidth=1.2,
-        label="Tỷ lệ sai hỏng (%)",
-    )
-
-    ax_b3.set_xticks(x)
-    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=7.5)
-    ax_b3.set_xlim(-0.6, 11.6)
-    ax_b3.set_ylabel(
-        "SL Hoàn Thành [Log]", fontweight="bold", color=Theme.PRIMARY, fontsize=7.5
-    )
-    ax_b3_right.set_ylabel(
-        "Sai Hỏng (%)", fontweight="bold", color=Theme.DANGER, fontsize=7.5
-    )
-    ax_b3_right.set_ylim(-1.0, 5.0)
-    ax_b3.set_title(
-        f"SẢN LƯỢNG - DÒNG: {clean_emoji(selected_family)}",
-        fontweight="bold",
-        fontsize=8.5,
-        color=Theme.TEXT_PRIMARY,
-        pad=6,
-    )
-
-    fig3.subplots_adjust(top=0.88, bottom=0.20, left=0.10, right=0.90)
-    st.pyplot(fig3, width="stretch")
-
-  with col4:
-    fig4, ax_b4 = plt.subplots(figsize=(5.8, 2.05), dpi=150)
-    fig4.patch.set_facecolor(Theme.SURFACE)
-    ax_b4.set_facecolor(Theme.SURFACE)
-
-    for spine in ["top"]:
-      ax_b4.spines[spine].set_visible(False)
-    ax_b4_right = ax_b4.twinx()
-    for spine in ["top"]:
-      ax_b4_right.spines[spine].set_visible(False)
-
-    if not sub_5.empty:
-      summary_fams = (
-          sub_5.groupby("mat_prefix")[["sl_ht"]].sum().reset_index()
-      )
-      fams_x = [
-          str(val)
-          for val in summary_fams["mat_prefix"].tolist()
-          if pd.notna(val)
-          and str(val).strip()
-          and str(val).strip().lower() not in ["none", "nan"]
-      ]
-      if not fams_x:
-        fams_x, deliv_fams, defect_fams = ["Trống"], [0.0], [0.0]
-      else:
-        summary_fams = summary_fams[summary_fams["mat_prefix"].isin(fams_x)]
-        fams_x = summary_fams["mat_prefix"].tolist()
-        deliv_fams = summary_fams["sl_ht"].values
-        defect_fams = [0.0] * len(fams_x)
-    else:
-      fams_x, deliv_fams, defect_fams = ["Không có SP"], [0.0], [0.0]
-
-    x_b4 = np.arange(len(fams_x))
-    bar_colors = [
-        DISTINCT_COLORS[i % len(DISTINCT_COLORS)] for i in range(len(fams_x))
-    ]
-
-    bars_deliv = ax_b4.bar(
-        x_b4,
-        deliv_fams,
-        width=0.45,
-        label="SL Hoàn Thành Cả Năm",
-        color=bar_colors,
-    )
-    ax_b4.set_yscale("symlog", linthresh=100)
-    ax_b4.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
-
-    max_v_b4 = max(list(deliv_fams) + [100])
-    ax_b4.set_ylim(0, max_v_b4 * 3.2)
-
-    for i in range(len(fams_x)):
-      v = deliv_fams[i]
-      if v > 0:
-        ax_b4.text(
-            x_b4[i],
-            v * 1.15,
-            f"{int(v):,}",
-            ha="center",
-            va="bottom",
-            fontweight="bold",
-            fontsize=7,
-            color=bar_colors[i % len(bar_colors)],
-        )
-
-    ax_b4_right.plot(
-        x_b4,
-        defect_fams,
-        color=Theme.DANGER,
-        marker="s",
-        linewidth=1.2,
-        label="Tỷ lệ sai hỏng (%)",
-    )
-
-    ax_b4.set_xticks(x_b4)
-    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=7.5)
-    ax_b4.set_ylabel(
-        "Số Lượng SP [Log]", fontweight="bold", color=Theme.SUCCESS, fontsize=7.5
-    )
-    ax_b4_right.set_ylabel(
-        "Sai Hỏng (%)", fontweight="bold", color=Theme.DANGER, fontsize=7.5
-    )
-    ax_b4_right.set_ylim(-1.0, 5.0)
-    ax_b4.set_title(
-        "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
-        fontweight="bold",
-        fontsize=8.5,
-        color=Theme.TEXT_PRIMARY,
-        pad=6,
-    )
-
-    fig4.subplots_adjust(top=0.88, bottom=0.20, left=0.10, right=0.90)
-    st.pyplot(fig4, width="stretch")
-
-
-# ================= 5. ĐIỀU HƯỚNG HIỂN THỊ THEO THỰC CƠ =================
-if menu_option == "📋 Báo Cáo Vật Tư":
+# ================= 4. TAB 1: BÁO CÁO VẬT TƯ (ẢNH 1) =================
+with tab_vat_tu:
   if df_qa32.empty:
     st.info("💡 Chưa có dữ liệu QA32 trong khoảng thời gian đã chọn.")
   else:
@@ -757,10 +310,11 @@ if menu_option == "📋 Báo Cáo Vật Tư":
         top_block_dict[key]["ca_block"] += ca_val
         top_block_dict[key]["ft_total"] += ft_val
 
-    col1, col2 = st.columns([1.8, 1])
+    # HÀNG 1: BIỂU ĐỒ LỆNH KIỂM (CỘT RỘNG 1.85) & BIỂU ĐỒ TRÒN BLOCK (CỘT NHỎ 1.0)
+    col1, col2 = st.columns([1.85, 1.0])
 
     with col1:
-      fig1 = plt.figure(figsize=(9, 2.5), dpi=150)
+      fig1 = plt.figure(figsize=(9.0, 3.4), dpi=150)
       fig1.patch.set_facecolor(Theme.SURFACE)
 
       ax1 = fig1.add_subplot(111)
@@ -826,7 +380,7 @@ if menu_option == "📋 Báo Cáo Vật Tư":
           ft_qty_m,
           color=Theme.PRIMARY,
           marker="o",
-          linewidth=1.5,
+          linewidth=1.8,
           label="Tổng số hàng về (FT)",
       )
       line_by = ax2.plot(
@@ -834,7 +388,7 @@ if menu_option == "📋 Báo Cáo Vật Tư":
           total_by_sample_m,
           color=Theme.PURPLE,
           marker="s",
-          linewidth=1.5,
+          linewidth=1.8,
           linestyle="--",
           label="Số mẫu phải kiểm (BY)",
       )
@@ -843,22 +397,26 @@ if menu_option == "📋 Báo Cáo Vật Tư":
       ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
 
       ax1.set_xticks(x)
-      ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=7.5)
+      ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
       ax1.set_xlim(-0.6, 11.6)
       ax1.set_ylabel(
-          "← Số Lượng Lệnh", fontweight="bold", color=Theme.SUCCESS, fontsize=8
+          "← Số Lượng Lệnh (Trục Trái)",
+          fontweight="bold",
+          color=Theme.SUCCESS,
+          fontsize=8,
       )
       ax2.set_ylabel(
-          "Số Lượng Vật Tư [Log] →",
+          "Số Lượng Vật Tư / Mẫu [Log] (Trục Phải) →",
           fontweight="bold",
           color=Theme.PRIMARY,
           fontsize=8,
       )
       ax1.set_title(
-          "BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ",
+          "BÁO CÁO SỐ LƯỢNG LỆNH KIỂM & TỔNG VẬT TƯ VỀ / SỐ MẪU KIỂM",
           fontweight="bold",
-          fontsize=9,
+          fontsize=10,
           color=Theme.TEXT_PRIMARY,
+          pad=10,
       )
 
       all_handles = [b_ud01, b_ud02, b_ud03, line_ft[0], line_by[0]]
@@ -873,19 +431,19 @@ if menu_option == "📋 Báo Cáo Vật Tư":
           all_handles,
           all_labels,
           loc="upper center",
-          bbox_to_anchor=(0.5, -0.22),
+          bbox_to_anchor=(0.5, -0.18),
           frameon=False,
-          fontsize=7,
+          fontsize=7.5,
           ncol=3,
       )
 
       fig1.subplots_adjust(
-          top=0.88, bottom=0.25, left=0.08, right=0.92, wspace=0.18
+          top=0.88, bottom=0.22, left=0.08, right=0.92, wspace=0.18
       )
       st.pyplot(fig1, width="stretch")
 
     with col2:
-      fig_pie = plt.figure(figsize=(5, 2.5), dpi=150)
+      fig_pie = plt.figure(figsize=(4.5, 3.4), dpi=150)
       fig_pie.patch.set_facecolor(Theme.SURFACE)
       ax_pie = fig_pie.add_subplot(111)
       ax_pie.set_facecolor(Theme.SURFACE)
@@ -902,10 +460,10 @@ if menu_option == "📋 Báo Cáo Vật Tư":
             autopct="%1.1f%%",
             startangle=140,
             pctdistance=0.68,
-            labeldistance=1.12,
-            radius=1.1,
+            labeldistance=1.15,
+            radius=0.95,
             center=(0, -0.05),
-            wedgeprops=dict(width=0.40, edgecolor="white", linewidth=1.5),
+            wedgeprops=dict(width=0.38, edgecolor="white", linewidth=2),
         )
         texts[0].set_color(Theme.SUCCESS)
         texts[0].set_fontweight("bold")
@@ -925,22 +483,29 @@ if menu_option == "📋 Báo Cáo Vật Tư":
             ha="center",
             va="center",
             fontweight="bold",
-            fontsize=8,
+            fontsize=8.5,
             color=Theme.TEXT_PRIMARY,
         )
       else:
-        ax_pie.text(0, -0.05, "Chưa có dữ liệu", ha="center", fontsize=8)
+        ax_pie.text(0, -0.05, "Chưa có dữ liệu", ha="center", fontsize=8.5)
         ax_pie.axis("off")
 
       ax_pie.set_title(
           "TỶ LỆ VẬT TƯ ĐẠT VS BỊ BLOCK LỖI",
           fontweight="bold",
-          fontsize=9,
+          fontsize=10,
           color=Theme.TEXT_PRIMARY,
+          pad=10,
       )
-      fig_pie.subplots_adjust(top=0.88, bottom=0.10, left=0.05, right=0.95)
+      fig_pie.subplots_adjust(top=0.88, bottom=0.10, left=0.08, right=0.92)
       st.pyplot(fig_pie, width="stretch")
 
+    st.markdown("---")
+    st.markdown(
+        "<h5 style='color:#EF4444; margin-bottom:10px;'>🚨 DANH SÁCH VẬT TƯ BỊ"
+        " BLOCK & UD02, UD03</h5>",
+        unsafe_allow_html=True,
+    )
     sorted_blocks = sorted(
         top_block_dict.values(),
         key=lambda x: (x["ud03"] + x["ud02"], x["ca_block"], x["ft_total"]),
@@ -968,12 +533,445 @@ if menu_option == "📋 Báo Cáo Vật Tư":
           "Tổng SL Block (CA) / SL Về",
       ]
       st.dataframe(df_block, width="stretch", hide_index=True)
+    else:
+      st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03")
 
-elif menu_option == "⚙️ Báo Cáo Cơ Khí":
-  render_coois_grid_2x2("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)", sel_fam)
-elif menu_option == "🔌 Báo Cáo TU/TI":
-  render_coois_grid_2x2("TU_TI", "🔌 BÁO CÁO TUTI (LỆNH 3011)", sel_fam)
-elif menu_option == "⚡ Báo Cáo Công Tơ":
-  render_coois_grid_2x2(
-      "CONG_TO", "⚡ BÁO CÁO CÔNG TƠ (LỆNH 3013, 3016)", sel_fam
+
+# ================= 5. HÀM CHUNG CHO CÁC TAB COOIS (ẢNH 2) =================
+def render_coois_tab_layout(phan_he_code, title_text):
+  df_sub = (
+      df_coois[df_coois["phan_he"] == phan_he_code]
+      if not df_coois.empty
+      else pd.DataFrame()
   )
+
+  if df_sub.empty:
+    st.info(f"💡 Chưa có dữ liệu sản xuất cho phân hệ {title_text}.")
+    return
+
+  months_labels = [f"T{i}" for i in range(1, 13)]
+  m_comp_qty, m_uncomp_qty = [0.0] * 12, [0.0] * 12
+  m_tot_orders, m_uncomp_orders = [0] * 12, [0] * 12
+  tot_qty_all, deliv_qty_all = 0.0, 0.0
+
+  for _, r in df_sub.iterrows():
+    try:
+      m_idx = (
+          datetime.strptime(str(r["ngay_lenh_dt"]).split()[0], "%Y-%m-%d").month
+          - 1
+      )
+    except:
+      m_idx = 0
+    if not (0 <= m_idx < 12):
+      m_idx = 0
+
+    sl_t, sl_h = float(r["sl_tong"]), float(r["sl_ht"])
+    uncomp_q = max(0.0, sl_t - sl_h)
+
+    tot_qty_all += sl_t
+    deliv_qty_all += sl_h
+    m_comp_qty[m_idx] += sl_h
+    m_uncomp_qty[m_idx] += uncomp_q
+
+    m_tot_orders[m_idx] += 1
+    if sl_h < sl_t:
+      m_uncomp_orders[m_idx] += 1
+
+  title_clean = clean_emoji(title_text)
+
+  # HÀNG 1: [TOP LEFT - TIẾN ĐỘ SẢN XUẤT 65%] & [TOP RIGHT - DONUT TỔNG QUAN 35%]
+  col1, col2 = st.columns([1.85, 1.0])
+
+  with col1:
+    fig1, ax1 = plt.subplots(figsize=(8.5, 3.2), dpi=150)
+    fig1.patch.set_facecolor(Theme.SURFACE)
+    ax1.set_facecolor(Theme.SURFACE)
+    ax2 = ax1.twinx()
+
+    for spine in ["top"]:
+      ax1.spines[spine].set_visible(False)
+      ax2.spines[spine].set_visible(False)
+
+    x = np.arange(12)
+    w = 0.35
+    m_comp_orders = [m_tot_orders[i] - m_uncomp_orders[i] for i in range(12)]
+
+    ax1.bar(
+        x - w / 2,
+        m_comp_orders,
+        width=w,
+        color=Theme.PRIMARY,
+        label="Lệnh Hoàn Thành",
+    )
+    ax1.bar(
+        x - w / 2,
+        m_uncomp_orders,
+        width=w,
+        bottom=m_comp_orders,
+        color=Theme.DANGER,
+        label="Lệnh Chưa Xong",
+    )
+
+    ax2.bar(
+        x + w / 2,
+        m_comp_qty,
+        width=w,
+        color=Theme.SUCCESS,
+        label="SL Hoàn Thành",
+    )
+    ax2.bar(
+        x + w / 2,
+        m_uncomp_qty,
+        width=w,
+        bottom=m_comp_qty,
+        color=Theme.WARNING,
+        label="SL Chưa Xong",
+    )
+
+    ax2.set_yscale("symlog", linthresh=100)
+    ax2.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_q = max([m_comp_qty[i] + m_uncomp_qty[i] for i in range(12)] + [100])
+    ax2.set_ylim(0, max_q * 3.2)
+
+    for i in range(12):
+      t_qty = m_comp_qty[i] + m_uncomp_qty[i]
+      pct = (m_comp_qty[i] / t_qty * 100) if t_qty > 0 else 0
+      if t_qty > 0:
+        ax2.text(
+            x[i] + w / 2,
+            t_qty * 1.12,
+            f"{pct:.0f}%",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7.5,
+            color=Theme.SUCCESS,
+        )
+
+    ax1.set_title(
+        f"TIẾN ĐỘ SẢN XUẤT - {title_clean}",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+    ax1.set_ylabel(
+        "← Tổng Lệnh (Trục Trái)",
+        fontweight="bold",
+        color=Theme.PRIMARY,
+        fontsize=8,
+    )
+    ax2.set_ylabel(
+        "Số Lượng Giao [Log] (Trục Phải) →",
+        fontweight="bold",
+        color=Theme.SUCCESS,
+        fontsize=8,
+    )
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+    ax1.set_xlim(-0.6, 11.6)
+
+    lines1, labels1 = ax1.get_legend_handles_labels()
+    lines2, labels2 = ax2.get_legend_handles_labels()
+    ax1.legend(
+        lines1 + lines2,
+        labels1 + labels2,
+        loc="upper center",
+        bbox_to_anchor=(0.5, -0.18),
+        frameon=False,
+        fontsize=7.5,
+        ncol=4,
+    )
+
+    fig1.subplots_adjust(top=0.88, bottom=0.22, left=0.10, right=0.90)
+    st.pyplot(fig1, width="stretch")
+
+  with col2:
+    fig2, ax3 = plt.subplots(figsize=(4.2, 3.2), dpi=150)
+    fig2.patch.set_facecolor(Theme.SURFACE)
+    ax3.set_facecolor(Theme.SURFACE)
+
+    rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
+    pct_deliv = (deliv_qty_all / tot_qty_all * 100) if tot_qty_all > 0 else 0
+    pct_rem = 100.0 - pct_deliv if tot_qty_all > 0 else 0.0
+
+    if tot_qty_all > 0:
+      wedges, texts = ax3.pie(
+          [deliv_qty_all, rem_qty_all],
+          labels=[
+              f"Hoàn thành\n{pct_deliv:.1f}%\n({int(deliv_qty_all):,})",
+              f"Chưa xong\n{pct_rem:.1f}%\n({int(rem_qty_all):,})",
+          ],
+          colors=[Theme.SUCCESS, Theme.WARNING],
+          startangle=140,
+          pctdistance=0.6,
+          labeldistance=1.18,
+          radius=0.78,
+          wedgeprops=dict(width=0.32, edgecolor="white", linewidth=2),
+      )
+      texts[0].set_color(Theme.SUCCESS)
+      texts[0].set_fontweight("bold")
+      texts[0].set_fontsize(7.5)
+      if len(texts) > 1:
+        texts[1].set_color(Theme.DANGER)
+        texts[1].set_fontweight("bold")
+        texts[1].set_fontsize(7.5)
+
+      ax3.text(
+          0,
+          0,
+          f"TỔNG KẾ HOẠCH\n{int(tot_qty_all):,}",
+          ha="center",
+          va="center",
+          fontweight="bold",
+          fontsize=8.5,
+          color=Theme.TEXT_PRIMARY,
+      )
+    else:
+      ax3.text(0, 0, "Chưa có dữ liệu", ha="center", fontsize=8.5)
+      ax3.axis("off")
+
+    ax3.set_title(
+        "TỶ LỆ HOÀN THÀNH TỔNG QUAN",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+    fig2.subplots_adjust(top=0.88, bottom=0.10, left=0.10, right=0.90)
+    st.pyplot(fig2, width="stretch")
+
+  # HÀNG 2: [CÂN BẰNG 50% - 50%] GIỮA DÒNG SP VÀ CÁC MÃ ĐẦU 5
+  st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
+
+  col3, col4 = st.columns([1, 1])
+
+  sub_5 = (
+      df_sub[
+          df_sub["ma_tp"]
+          .astype(str)
+          .str.split(".")
+          .str[0]
+          .str.lstrip("0")
+          .str.startswith("5")
+      ].copy()
+      if not df_sub.empty
+      else pd.DataFrame()
+  )
+
+  raw_fams = (
+      [
+          str(x).strip()
+          for x in sub_5["mat_prefix"].unique()
+          if pd.notna(x)
+          and str(x).strip()
+          and str(x).strip().lower() not in ["none", "nan"]
+      ]
+      if not sub_5.empty
+      else []
+  )
+  clean_fams = sorted(list(set(raw_fams)))
+  available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
+
+  # --- DƯỚI TRÁI: ĐẶT BỘ LỌC DÒNG SP PHÍA TRÊN BIỂU ĐỒ ---
+  with col3:
+    col_sel, _ = st.columns([1.5, 1])
+    with col_sel:
+      sel_fam = st.selectbox(
+          "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
+      )
+
+    m3_qty = [0.0] * 12
+    if not sub_5.empty:
+      sub_5_df = sub_5.copy()
+      sub_5_df["month"] = pd.to_datetime(
+          sub_5_df["ngay_lenh_dt"], errors="coerce"
+      ).dt.month
+      sub_filtered = (
+          sub_5_df[sub_5_df["mat_prefix"] == sel_fam]
+          if sel_fam != "Tất cả dòng sản phẩm"
+          else sub_5_df
+      )
+      for _, r in sub_filtered.iterrows():
+        m_val = r["month"]
+        if pd.notna(m_val) and 1 <= int(m_val) <= 12:
+          m3_qty[int(m_val) - 1] += float(r["sl_ht"])
+
+    defect_rate_m = [0.0] * 12
+
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
+    fig3.patch.set_facecolor(Theme.SURFACE)
+    ax_b3.set_facecolor(Theme.SURFACE)
+
+    for spine in ["top"]:
+      ax_b3.spines[spine].set_visible(False)
+    ax_b3_right = ax_b3.twinx()
+    for spine in ["top"]:
+      ax_b3_right.spines[spine].set_visible(False)
+
+    ax_b3.bar(
+        x,
+        m3_qty,
+        width=0.42,
+        color=Theme.PRIMARY,
+        alpha=0.9,
+        label="SL Sản Xuất",
+    )
+    ax_b3.set_yscale("symlog", linthresh=100)
+    ax_b3.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_v_b3 = max(m3_qty + [100])
+    ax_b3.set_ylim(0, max_v_b3 * 3.2)
+
+    for i in range(12):
+      v = m3_qty[i]
+      if v > 0:
+        ax_b3.text(
+            x[i],
+            v * 1.18,
+            f"{int(v):,}",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7,
+            color=Theme.PRIMARY,
+        )
+
+    ax_b3_right.plot(
+        x,
+        defect_rate_m,
+        color=Theme.DANGER,
+        marker="o",
+        linewidth=1.2,
+        label="Tỷ lệ sai hỏng (%)",
+    )
+
+    ax_b3.set_xticks(x)
+    ax_b3.set_xticklabels(months_labels, fontweight="bold", fontsize=8)
+    ax_b3.set_xlim(-0.6, 11.6)
+    ax_b3.set_ylabel(
+        "SL Hoàn Thành [Log]", fontweight="bold", color=Theme.PRIMARY, fontsize=8
+    )
+    ax_b3_right.set_ylabel(
+        "Sai Hỏng (%)", fontweight="bold", color=Theme.DANGER, fontsize=8
+    )
+    ax_b3_right.set_ylim(-1.0, 5.0)
+    ax_b3.set_title(
+        f"SẢN LƯỢNG - DÒNG: {clean_emoji(sel_fam)}",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+
+    fig3.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
+    st.pyplot(fig3, width="stretch")
+
+  # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5 ---
+  with col4:
+    # Khoảng trống giả để căn thẳng hàng ngang đỉnh với bên trái
+    st.markdown(
+        "<div style='height: 42px;'></div>", unsafe_allow_html=True
+    )
+
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
+    fig4.patch.set_facecolor(Theme.SURFACE)
+    ax_b4.set_facecolor(Theme.SURFACE)
+
+    for spine in ["top"]:
+      ax_b4.spines[spine].set_visible(False)
+    ax_b4_right = ax_b4.twinx()
+    for spine in ["top"]:
+      ax_b4_right.spines[spine].set_visible(False)
+
+    if not sub_5.empty:
+      summary_fams = (
+          sub_5.groupby("mat_prefix")[["sl_ht"]].sum().reset_index()
+      )
+      fams_x = [
+          str(val)
+          for val in summary_fams["mat_prefix"].tolist()
+          if pd.notna(val)
+          and str(val).strip()
+          and str(val).strip().lower() not in ["none", "nan"]
+      ]
+      if not fams_x:
+        fams_x, deliv_fams, defect_fams = ["Trống"], [0.0], [0.0]
+      else:
+        summary_fams = summary_fams[summary_fams["mat_prefix"].isin(fams_x)]
+        fams_x = summary_fams["mat_prefix"].tolist()
+        deliv_fams = summary_fams["sl_ht"].values
+        defect_fams = [0.0] * len(fams_x)
+    else:
+      fams_x, deliv_fams, defect_fams = ["Không có SP"], [0.0], [0.0]
+
+    x_b4 = np.arange(len(fams_x))
+    bar_colors = [
+        DISTINCT_COLORS[i % len(DISTINCT_COLORS)] for i in range(len(fams_x))
+    ]
+
+    bars_deliv = ax_b4.bar(
+        x_b4,
+        deliv_fams,
+        width=0.45,
+        label="SL Hoàn Thành Cả Năm",
+        color=bar_colors,
+    )
+    ax_b4.set_yscale("symlog", linthresh=100)
+    ax_b4.yaxis.set_major_formatter(ticker.FuncFormatter(log_formatter))
+
+    max_v_b4 = max(list(deliv_fams) + [100])
+    ax_b4.set_ylim(0, max_v_b4 * 3.5)
+
+    for i in range(len(fams_x)):
+      v = deliv_fams[i]
+      if v > 0:
+        ax_b4.text(
+            x_b4[i],
+            v * 1.18,
+            f"{int(v):,}",
+            ha="center",
+            va="bottom",
+            fontweight="bold",
+            fontsize=7.5,
+            color=bar_colors[i % len(bar_colors)],
+        )
+
+    ax_b4_right.plot(
+        x_b4,
+        defect_fams,
+        color=Theme.DANGER,
+        marker="s",
+        linewidth=1.2,
+        label="Tỷ lệ sai hỏng (%)",
+    )
+
+    ax_b4.set_xticks(x_b4)
+    ax_b4.set_xticklabels(fams_x, fontweight="bold", fontsize=8)
+    ax_b4.set_ylabel(
+        "Số Lượng SP [Log]", fontweight="bold", color=Theme.SUCCESS, fontsize=8
+    )
+    ax_b4_right.set_ylabel(
+        "Sai Hỏng (%)", fontweight="bold", color=Theme.DANGER, fontsize=8
+    )
+    ax_b4_right.set_ylim(-1.0, 5.0)
+    ax_b4.set_title(
+        "TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5",
+        fontweight="bold",
+        fontsize=9.5,
+        color=Theme.TEXT_PRIMARY,
+        pad=10,
+    )
+
+    fig4.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
+    st.pyplot(fig4, width="stretch")
+
+
+# ================= 6. ĐIỀU HƯỚNG BÁO CÁO =================
+with tab_co_khi:
+  render_coois_tab_layout("CO_KHI", "⚙️ BÁO CÁO CƠ KHÍ (LỆNH 3012)")
+with tab_tuti:
+  render_coois_tab_layout("TU_TI", "🔌 BÁO CÁO TUTI (LỆNH 3011)")
+with tab_cong_to:
+  render_coois_tab_layout("CONG_TO", "⚡ BÁO CÁO CÔNG TƠ (LỆNH 3013, 3016)")
