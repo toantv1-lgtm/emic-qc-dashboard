@@ -27,12 +27,11 @@ st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        header[data-testid="stHeader"] {
-            background: transparent !important; height: 2.2rem !important; box-shadow: none !important;
-        }
-        div[data-testid="stToolbar"] { visibility: hidden !important; }
-        header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
-        header[data-testid="stHeader"] button[kind="header"] { visibility: visible !important; }
+        #MainMenu { visibility: hidden; }
+        footer { visibility: hidden; }
+        header[data-testid="stHeader"] { background: transparent !important; box-shadow: none !important; }
+        div[data-baseweb="popover"] { z-index: 999999 !important; }
+        div[data-baseweb="calendar"] { z-index: 999999 !important; }
 
         :root {
             --bg: #F5F6F9;
@@ -72,7 +71,7 @@ st.markdown(
         h1, h2, h3, h4, h5, h6, p, span, div, label { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
 
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 2.6rem !important;
+            padding-top: 1.2rem !important;
             padding-bottom: 3rem !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
@@ -741,7 +740,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud01_m,
               name="UD 01 (Đạt)",
-              marker=dict(color=COLOR_SUCCESS, cornerradius=6),
+              marker_color=COLOR_SUCCESS,
           ),
           secondary_y=False,
       )
@@ -750,7 +749,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud02_m,
               name="UD 02 (Đặc nhượng)",
-              marker=dict(color=COLOR_WARNING, cornerradius=6),
+              marker_color=COLOR_WARNING,
           ),
           secondary_y=False,
       )
@@ -759,7 +758,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud03_m,
               name="UD 03 (Trả lại)",
-              marker=dict(color=COLOR_DANGER, cornerradius=6),
+              marker_color=COLOR_DANGER,
           ),
           secondary_y=False,
       )
@@ -949,7 +948,7 @@ with tab_vat_tu:
               )
           )
           fig_sup.update_layout(
-              margin=dict(l=10, r=45, t=10, b=10),
+              margin=dict(l=10, r=55, t=10, b=10),
               height=max(230, 32 * len(sup_names)),
               paper_bgcolor="#FFFFFF",
               plot_bgcolor="#FFFFFF",
@@ -962,6 +961,7 @@ with tab_vat_tu:
           )
           fig_sup.update_yaxes(
               showgrid=False,
+              automargin=True,
               tickfont=dict(size=11, family=PLOTLY_FONT, color=COLOR_TEXT),
           )
           st.plotly_chart(
@@ -1110,7 +1110,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=m_comp_qty,
             name="SL Hoàn Thành",
-            marker=dict(color=COLOR_SUCCESS, cornerradius=6),
+            marker_color=COLOR_SUCCESS,
             text=[f"{int(v):,}" if v > 0 else "" for v in m_comp_qty],
             textposition="inside",
             textfont=dict(size=9.5, family=PLOTLY_FONT, color="#FFFFFF"),
@@ -1122,7 +1122,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=m_uncomp_qty,
             name="SL Chưa Xong",
-            marker=dict(color=COLOR_WARNING, cornerradius=6),
+            marker_color=COLOR_WARNING,
             base=m_comp_qty,
             text=[f"{int(v):,}" if v > 0 else "" for v in m_uncomp_qty],
             textposition="inside",
@@ -1402,14 +1402,15 @@ def render_coois_tab_layout(phan_he_code, title_text):
         showgrid=False, tickfont=dict(size=11, family="Inter, -apple-system, Segoe UI, sans-serif", color="#6B7280")
     )
     fig4.update_yaxes(
-        title_text="Số Lượng SP",
+        title_text="Số Lượng SP (Log)",
         title_font=dict(size=12, color=COLOR_SUCCESS),
+        type="log",
+        dtick=1,
         tickformat="~s",
         tickfont=dict(size=11, family=PLOTLY_FONT, color=PLOTLY_AXIS_TEXT),
         showgrid=True,
         gridcolor=PLOTLY_GRID,
         zeroline=False,
-        rangemode="tozero",
     )
 
     st.plotly_chart(
@@ -1569,8 +1570,15 @@ def render_coois_tab_layout(phan_he_code, title_text):
   t_col1, t_col2 = st.columns([1.6, 1.0])
   with t_col1:
     st.markdown("##### 1. Tiến Độ Sản Xuất Theo Tháng")
+    styled_monthly = (
+        df_monthly_summary.style
+        .background_gradient(subset=["Lệnh Hoàn Thành"], cmap="Blues")
+        .background_gradient(subset=["Lệnh Chưa Xong"], cmap="Reds")
+        .background_gradient(subset=["SL Hoàn Thành"], cmap="Greens")
+        .background_gradient(subset=["SL Chưa Xong"], cmap="Oranges")
+    )
     st.dataframe(
-        df_monthly_summary,
+        styled_monthly,
         column_config={
             "Tỷ Lệ HT Lệnh (%)": st.column_config.ProgressColumn(
                 "Tỷ Lệ HT Lệnh", format="%.1f%%", min_value=0, max_value=100
@@ -1590,8 +1598,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
   with t_col2:
     st.markdown("##### 2. Tổng Quan Chỉ Tiêu Kế Hoạch")
+    styled_plan = df_plan_summary.style.background_gradient(
+        subset=["Số Lượng"], cmap="Blues"
+    )
     st.dataframe(
-        df_plan_summary,
+        styled_plan,
         column_config={
             "Tỷ Lệ Cơ Cấu (%)": st.column_config.ProgressColumn(
                 "Tỷ Lệ Cơ Cấu", format="%.1f%%", min_value=0, max_value=100
@@ -1605,8 +1616,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
   t_col3, t_col4 = st.columns([1.0, 1.0])
   with t_col3:
     st.markdown(f"##### 3. Chi Tiết Sản Lượng Dòng SP ({sel_fam})")
+    styled_family = df_family_summary.style.background_gradient(
+        subset=[f"SL Sản Xuất ({sel_fam})"], cmap="Purples"
+    )
     st.dataframe(
-        df_family_summary,
+        styled_family,
         column_config={
             "Tỷ Lệ Đóng Góp Tháng (%)": st.column_config.ProgressColumn(
                 "Tỷ Lệ Đóng Góp Tháng",
@@ -1623,8 +1637,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
   with t_col4:
     st.markdown("##### 4. Tổng Sản Lượng Cả Năm Các Mã Đầu 5")
+    styled_year = df_year_summary.style.background_gradient(
+        subset=["Tổng SL Hoàn Thành Cả Năm"], cmap="BuGn"
+    )
     st.dataframe(
-        df_year_summary,
+        styled_year,
         column_config={
             "Tỷ Lệ Cơ Cấu (%)": st.column_config.ProgressColumn(
                 "Tỷ Lệ Cơ Cấu", format="%.1f%%", min_value=0, max_value=100
