@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
-# ================= 1. CẤU HÌNH TRANG & CSS SỬA LỖI ĐÓNG KHUNG =================
+# ================= 1. CẤU HÌNH GIAO DIỆN & CSS =================
 st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
@@ -19,7 +19,7 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        /* Ẩn Header mặc định Streamlit */
+        /* Ẩn Header mặc định của Streamlit */
         header[data-testid="stHeader"] {
             display: none !important;
         }
@@ -61,7 +61,7 @@ st.markdown(
             box-shadow: 0 2px 4px rgba(59, 130, 246, 0.3) !important;
         }
         
-        /* SỬA LỖI: Chỉ đóng khung Card cho CỘT CHÍNH, KHÔNG đóng khung cho cột phụ bên trong */
+        /* Khung Card bao quanh các cột biểu đồ */
         div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
             background-color: #FFFFFF;
             border-radius: 10px;
@@ -167,7 +167,7 @@ with col_den:
   den_date = st.date_input("Đến ngày", date.today())
 
 st.sidebar.markdown("---")
-if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", width="stretch"):
+if st.sidebar.button("🔄 Cập Nhật Lại Dữ Liệu", use_container_width=True):
   st.cache_data.clear()
   st.rerun()
 
@@ -433,7 +433,7 @@ with tab_vat_tu:
       fig1.subplots_adjust(
           top=0.88, bottom=0.22, left=0.08, right=0.92, wspace=0.18
       )
-      st.pyplot(fig1, width="stretch")
+      st.pyplot(fig1, use_container_width=True)
 
     with col2:
       fig_pie = plt.figure(figsize=(3.5, 3.2), dpi=150)
@@ -441,7 +441,6 @@ with tab_vat_tu:
       ax_pie = fig_pie.add_subplot(111)
       ax_pie.set_facecolor(Theme.SURFACE)
 
-      # KHÓA TỶ LỆ TRÒN TUYỆT ĐỐI (KHÔNG CHO PHỒNG TO MÉO HÌNH)
       ax_pie.set_aspect("equal")
 
       ok_cnt = max(0.0, total_ft_all - total_ca_block)
@@ -493,7 +492,7 @@ with tab_vat_tu:
           pad=10,
       )
       fig_pie.subplots_adjust(top=0.88, bottom=0.10, left=0.08, right=0.92)
-      st.pyplot(fig_pie, width="stretch")
+      st.pyplot(fig_pie, use_container_width=True)
 
     st.markdown("---")
     st.markdown(
@@ -527,7 +526,7 @@ with tab_vat_tu:
           "Số Lượt UD 03",
           "Tổng SL Block (CA) / SL Về",
       ]
-      st.dataframe(df_block, width="stretch", hide_index=True)
+      st.dataframe(df_block, use_container_width=True, hide_index=True)
     else:
       st.success("🎉 Không có vật tư nào bị Block hoặc UD 02, 03")
 
@@ -578,7 +577,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
   col1, col2 = st.columns([2.2, 1.0])
 
   with col1:
-    fig1, ax1 = plt.subplots(figsize=(7.5, 3.2), dpi=150)
+    fig1, ax1 = plt.subplots(figsize=(7.5, 3.0), dpi=150)
     fig1.patch.set_facecolor(Theme.SURFACE)
     ax1.set_facecolor(Theme.SURFACE)
     ax2 = ax1.twinx()
@@ -680,14 +679,13 @@ def render_coois_tab_layout(phan_he_code, title_text):
     )
 
     fig1.subplots_adjust(top=0.88, bottom=0.22, left=0.10, right=0.90)
-    st.pyplot(fig1, width="stretch")
+    st.pyplot(fig1, use_container_width=True)
 
   with col2:
-    fig2, ax3 = plt.subplots(figsize=(3.5, 3.2), dpi=150)
+    fig2, ax3 = plt.subplots(figsize=(3.5, 3.0), dpi=150)
     fig2.patch.set_facecolor(Theme.SURFACE)
     ax3.set_facecolor(Theme.SURFACE)
 
-    # KHÓA TỶ LỆ TRÒN TUYỆT ĐỐI (CHỐNG MÉO HÌNH VÀ PHỒNG TO)
     ax3.set_aspect("equal")
 
     rem_qty_all = max(0.0, tot_qty_all - deliv_qty_all)
@@ -738,12 +736,10 @@ def render_coois_tab_layout(phan_he_code, title_text):
         pad=10,
     )
     fig2.subplots_adjust(top=0.88, bottom=0.10, left=0.10, right=0.90)
-    st.pyplot(fig2, width="stretch")
+    st.pyplot(fig2, use_container_width=True)
 
-  # HÀNG 2: [CÂN BẰNG 50% - 50%]
+  # HÀNG 2: [TÁCH BỘ LỌC DÒNG SP RA HÀNG RIÊNG ĐỂ 2 ĐỒ THỊ BÊN DƯỚI THẲNG HÀNG 100%]
   st.markdown("<div style='margin-top:10px;'></div>", unsafe_allow_html=True)
-
-  col3, col4 = st.columns([1, 1])
 
   sub_5 = (
       df_sub[
@@ -772,12 +768,18 @@ def render_coois_tab_layout(phan_he_code, title_text):
   clean_fams = sorted(list(set(raw_fams)))
   available_fams = ["Tất cả dòng sản phẩm"] + clean_fams
 
-  # --- DƯỚI TRÁI: KHÔNG DÙNG COLUMNS CON ĐỂ TRÁNH TẠO Ô TRẮNG THỪA ---
-  with col3:
+  # ĐẶC BIỆT: Đưa Selectbox ra thành 1 hàng riêng ở phía trên
+  col_sel, _ = st.columns([1.5, 1.0])
+  with col_sel:
     sel_fam = st.selectbox(
         "🎯 Chọn Dòng SP (Đầu 5):", available_fams, key=f"cb_{phan_he_code}"
     )
 
+  # BẮT ĐẦU HÀNG 2 CỘT BIỂU ĐỒ - HOÀN TOÀN ĐỒNG NHẤT
+  col3, col4 = st.columns([1, 1])
+
+  # --- DƯỚI TRÁI: BIỂU ĐỒ SẢN LƯỢNG THEO DÒNG SP ---
+  with col3:
     m3_qty = [0.0] * 12
     if not sub_5.empty:
       sub_5_df = sub_5.copy()
@@ -796,7 +798,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
 
     defect_rate_m = [0.0] * 12
 
-    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.6), dpi=150)
+    fig3, ax_b3 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
     fig3.patch.set_facecolor(Theme.SURFACE)
     ax_b3.set_facecolor(Theme.SURFACE)
 
@@ -856,17 +858,12 @@ def render_coois_tab_layout(phan_he_code, title_text):
         pad=10,
     )
 
-    fig3.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
-    st.pyplot(fig3, width="stretch")
+    fig3.subplots_adjust(top=0.85, bottom=0.22, left=0.12, right=0.88)
+    st.pyplot(fig3, use_container_width=True)
 
   # --- DƯỚI PHẢI: TỔNG SẢN LƯỢNG CẢ NĂM CÁC MÃ ĐẦU 5 ---
   with col4:
-    # Căn lề trống vừa đúng với chiều cao Selectbox bên trái
-    st.markdown(
-        "<div style='height: 40px;'></div>", unsafe_allow_html=True
-    )
-
-    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.6), dpi=150)
+    fig4, ax_b4 = plt.subplots(figsize=(6.0, 2.7), dpi=150)
     fig4.patch.set_facecolor(Theme.SURFACE)
     ax_b4.set_facecolor(Theme.SURFACE)
 
@@ -955,7 +952,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         pad=10,
     )
 
-    fig4.subplots_adjust(top=0.86, bottom=0.22, left=0.12, right=0.88)
+    fig4.subplots_adjust(top=0.85, bottom=0.22, left=0.12, right=0.88)
     st.pyplot(fig4, use_container_width=True)
 
 
