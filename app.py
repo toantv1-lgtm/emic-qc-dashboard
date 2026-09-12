@@ -20,14 +20,19 @@ st.set_page_config(
     page_title="EMIC QC Dashboard",
     page_icon="📊",
     layout="wide",
-    initial_sidebar_state="collapsed",
+    initial_sidebar_state="expanded",
 )
 
 st.markdown(
     """
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
-        header[data-testid="stHeader"] { display: none !important; }
+        header[data-testid="stHeader"] {
+            background: transparent !important; height: 2.2rem !important; box-shadow: none !important;
+        }
+        div[data-testid="stToolbar"] { visibility: hidden !important; }
+        header[data-testid="stHeader"] [data-testid="stSidebarCollapsedControl"],
+        header[data-testid="stHeader"] button[kind="header"] { visibility: visible !important; }
 
         :root {
             --bg: #F5F6F9;
@@ -67,7 +72,7 @@ st.markdown(
         h1, h2, h3, h4, h5, h6, p, span, div, label { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
 
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 1.1rem !important;
+            padding-top: 2.6rem !important;
             padding-bottom: 3rem !important;
             padding-left: 2rem !important;
             padding-right: 2rem !important;
@@ -90,7 +95,7 @@ st.markdown(
             border-bottom: 1px solid var(--border);
         }
         .page-header .ph-title {
-            font-size: 22px; font-weight: 800; color: var(--text); margin: 0;
+            font-size: 24px; font-weight: 900; color: var(--text); margin: 0;
             letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px;
         }
         .page-header .ph-subtitle { font-size: 12.5px; color: var(--text-muted); margin: 4px 0 0 0; font-weight: 500; }
@@ -137,7 +142,7 @@ st.markdown(
         }
         .kpi-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: var(--border-strong); }
         .kpi-card::before {
-            content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+            content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
             background: var(--accent, var(--primary));
         }
         .kpi-card .kpi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
@@ -155,23 +160,34 @@ st.markdown(
         /* ============ CHART CARDS ============ */
         .chart-card {
             background-color: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
-            padding: 18px 20px 8px 20px; box-shadow: var(--shadow); margin-bottom: 18px;
-            transition: box-shadow 0.18s ease;
+            padding: 18px 22px 10px 22px; box-shadow: 0 2px 4px rgba(15,18,34,0.06), 0 12px 28px -8px rgba(15,18,34,0.14);
+            margin-bottom: 20px; transition: box-shadow 0.18s ease, transform 0.18s ease;
         }
-        .chart-card:hover { box-shadow: var(--shadow-hover); }
-        .chart-card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
-        .chart-card-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+        .chart-card:hover { box-shadow: 0 4px 8px rgba(15,18,34,0.08), 0 18px 36px -8px rgba(15,18,34,0.18); transform: translateY(-1px); }
+        .chart-card-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;
+            padding-bottom: 10px; border-bottom: 1px solid var(--border);
+        }
+        .chart-card-title {
+            font-size: 15.5px; font-weight: 800; color: var(--text); letter-spacing: -0.01em;
+            display: flex; align-items: center; gap: 8px;
+        }
+        .chart-card-title::before {
+            content: ""; width: 4px; height: 15px; border-radius: 2px;
+            background: var(--primary); display: inline-block;
+        }
         .chart-card-caption {
             font-size: 11px; color: var(--text-muted); font-weight: 600;
             background: var(--bg); padding: 3px 9px; border-radius: 999px;
         }
 
-        .section-heading { font-size: 15.5px; font-weight: 700; color: var(--text); margin: 6px 0 14px 2px; }
+        .section-heading { font-size: 16.5px; font-weight: 800; color: var(--text); margin: 6px 0 14px 2px; letter-spacing: -0.01em; }
 
         /* ============ BẢNG DỮ LIỆU ============ */
         div[data-testid="stDataFrame"] {
-            border: 1px solid var(--border) !important; border-radius: var(--radius-sm) !important;
-            box-shadow: var(--shadow-xs); overflow: hidden;
+            border: 1px solid var(--border) !important; border-radius: var(--radius) !important;
+            box-shadow: 0 2px 4px rgba(15,18,34,0.05), 0 8px 20px -6px rgba(15,18,34,0.10);
+            overflow: hidden;
         }
         div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-family: 'Inter', sans-serif !important; }
 
@@ -725,7 +741,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud01_m,
               name="UD 01 (Đạt)",
-              marker_color=COLOR_SUCCESS,
+              marker=dict(color=COLOR_SUCCESS, cornerradius=6),
           ),
           secondary_y=False,
       )
@@ -734,7 +750,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud02_m,
               name="UD 02 (Đặc nhượng)",
-              marker_color=COLOR_WARNING,
+              marker=dict(color=COLOR_WARNING, cornerradius=6),
           ),
           secondary_y=False,
       )
@@ -743,7 +759,7 @@ with tab_vat_tu:
               x=months_labels,
               y=ud03_m,
               name="UD 03 (Trả lại)",
-              marker_color=COLOR_DANGER,
+              marker=dict(color=COLOR_DANGER, cornerradius=6),
           ),
           secondary_y=False,
       )
@@ -754,7 +770,11 @@ with tab_vat_tu:
               x=months_labels,
               y=total_by,
               name="Số mẫu phải kiểm (BY)",
+              mode="lines+markers+text",
               line=dict(color=COLOR_PURPLE, width=2, dash="dash"),
+              text=[f"{int(v):,}" if v > 0 else "" for v in total_by],
+              textposition="top center",
+              textfont=dict(size=9.5, family=PLOTLY_FONT, color=COLOR_PURPLE),
           ),
           secondary_y=True,
       )
@@ -763,10 +783,28 @@ with tab_vat_tu:
               x=months_labels,
               y=ft_qty_m,
               name="Tổng số hàng về (FT)",
+              mode="lines+markers+text",
               line=dict(color=COLOR_PRIMARY, width=2),
+              text=[f"{int(v):,}" if v > 0 else "" for v in ft_qty_m],
+              textposition="bottom center",
+              textfont=dict(size=9.5, family=PLOTLY_FONT, color=COLOR_PRIMARY),
           ),
           secondary_y=True,
       )
+
+      # Tổng số lô trên đỉnh mỗi cột chồng
+      total_lots_m = [ud01_m[i] + ud02_m[i] + ud03_m[i] for i in range(12)]
+      for i in range(12):
+        if total_lots_m[i] > 0:
+          fig1.add_annotation(
+              x=months_labels[i],
+              y=total_lots_m[i],
+              text=f"<b>{int(total_lots_m[i]):,}</b>",
+              showarrow=False,
+              yshift=12,
+              font=dict(size=10.5, family=PLOTLY_FONT, color=COLOR_TEXT),
+              yref="y1",
+          )
 
       fig1.update_layout(
           barmode="stack",
@@ -847,7 +885,7 @@ with tab_vat_tu:
           ]
       )
       fig2.update_layout(
-          margin=dict(l=30, r=30, t=8, b=55),
+          margin=dict(l=95, r=95, t=30, b=30),
           height=PLOT_HEIGHT,
           paper_bgcolor="#FFFFFF",
           showlegend=False,
@@ -902,7 +940,7 @@ with tab_vat_tu:
                   x=sup_vals,
                   y=sup_names,
                   orientation="h",
-                  marker_color=COLOR_DANGER,
+                  marker=dict(color=COLOR_DANGER, cornerradius=6),
                   text=[f"{v:,.0f}" for v in sup_vals],
                   textposition="outside",
                   textfont=dict(
@@ -956,8 +994,18 @@ with tab_vat_tu:
             "Số Lượt UD 03",
             "Tổng SL Block (CA) / SL Về",
         ]
+        styled_block = (
+            df_block.style
+            .background_gradient(
+                subset=["Số Lượt UD 02"], cmap="Oranges", vmin=0
+            )
+            .background_gradient(
+                subset=["Số Lượt UD 03"], cmap="Reds", vmin=0
+            )
+            .format({"Số Lượt UD 02": "{:.0f}", "Số Lượt UD 03": "{:.0f}"})
+        )
         st.dataframe(
-            df_block, use_container_width=True, hide_index=True, height=360
+            styled_block, use_container_width=True, hide_index=True, height=360
         )
         chart_card_close()
     else:
@@ -1062,7 +1110,10 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=m_comp_qty,
             name="SL Hoàn Thành",
-            marker_color=COLOR_SUCCESS,
+            marker=dict(color=COLOR_SUCCESS, cornerradius=6),
+            text=[f"{int(v):,}" if v > 0 else "" for v in m_comp_qty],
+            textposition="inside",
+            textfont=dict(size=9.5, family=PLOTLY_FONT, color="#FFFFFF"),
         ),
         secondary_y=False,
     )
@@ -1071,8 +1122,11 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=m_uncomp_qty,
             name="SL Chưa Xong",
-            marker_color=COLOR_WARNING,
+            marker=dict(color=COLOR_WARNING, cornerradius=6),
             base=m_comp_qty,
+            text=[f"{int(v):,}" if v > 0 else "" for v in m_uncomp_qty],
+            textposition="inside",
+            textfont=dict(size=9.5, family=PLOTLY_FONT, color="#FFFFFF"),
         ),
         secondary_y=False,
     )
@@ -1087,9 +1141,12 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=pct_hoanthanh_m,
             name="% Hoàn Thành",
-            mode="lines+markers",
+            mode="lines+markers+text",
             line=dict(color=COLOR_PRIMARY, width=2.5),
             marker=dict(size=6, color=COLOR_PRIMARY),
+            text=[f"{v:.0f}%" if v is not None else "" for v in pct_hoanthanh_m],
+            textposition="top center",
+            textfont=dict(size=10, family=PLOTLY_FONT, color=COLOR_PRIMARY),
             connectgaps=False,
         ),
         secondary_y=True,
@@ -1166,7 +1223,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
                 textfont=dict(
                     size=12,
                     family="Inter, -apple-system, Segoe UI, sans-serif",
-                    color=[COLOR_SUCCESS, COLOR_DANGER],
+                    color=[COLOR_SUCCESS, COLOR_WARNING],
                 ),
                 direction="clockwise",
                 sort=False,
@@ -1174,7 +1231,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         ]
     )
     fig2.update_layout(
-        margin=dict(l=30, r=30, t=8, b=55),
+        margin=dict(l=95, r=95, t=30, b=30),
         height=PLOT_HEIGHT,
         paper_bgcolor="#FFFFFF",
         showlegend=False,
@@ -1253,7 +1310,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
             x=months_labels,
             y=m3_qty,
             name="SL Sản Xuất",
-            marker_color=COLOR_PRIMARY,
+            marker=dict(color=COLOR_PRIMARY, cornerradius=6),
             text=[f"{int(v):,}" if v > 0 else "" for v in m3_qty],
             textposition="outside",
             textfont=dict(color=COLOR_PRIMARY, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
@@ -1326,7 +1383,7 @@ def render_coois_tab_layout(phan_he_code, title_text):
         go.Bar(
             x=fams_x,
             y=deliv_fams,
-            marker_color=bar_colors,
+            marker=dict(color=bar_colors, cornerradius=6),
             text=[f"{int(v):,}" if v > 0 else "" for v in deliv_fams],
             textposition="outside",
             textfont=dict(color=bar_colors, size=11, family="Inter, -apple-system, Segoe UI, sans-serif"),
