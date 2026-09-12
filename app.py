@@ -26,83 +26,98 @@ st.set_page_config(
 st.markdown(
     """
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
         header[data-testid="stHeader"] { display: none !important; }
 
         :root {
-            --bg: #F7F8FA;
+            --bg: #F5F6F9;
+            --bg-accent: #EEF1FA;
             --surface: #FFFFFF;
-            --border: #EBEDF1;
-            --text: #111827;
+            --border: #E6E9F0;
+            --border-strong: #D6DAE5;
+            --text: #0F1222;
             --text-muted: #6B7280;
+            --text-faint: #9CA3AF;
             --primary: #4F46E5;
+            --primary-dark: #3730A3;
             --primary-soft: #EEF0FF;
-            --success: #10B981;
+            --success: #0EA968;
             --success-soft: #ECFDF5;
-            --danger: #EF4444;
-            --danger-soft: #FEF2F2;
-            --warning: #F59E0B;
-            --warning-soft: #FFFBEB;
-            --purple: #A855F7;
+            --danger: #E23D4D;
+            --danger-soft: #FEF2F3;
+            --warning: #EA8A0A;
+            --warning-soft: #FFF8EB;
+            --purple: #9333EA;
+            --radius-lg: 18px;
             --radius: 14px;
-            --shadow: 0 1px 2px rgba(17,24,39,0.04), 0 1px 6px rgba(17,24,39,0.04);
-            --shadow-hover: 0 4px 16px rgba(17,24,39,0.08);
+            --radius-sm: 10px;
+            --shadow-xs: 0 1px 2px rgba(15,18,34,0.05);
+            --shadow: 0 1px 3px rgba(15,18,34,0.05), 0 6px 16px -6px rgba(15,18,34,0.08);
+            --shadow-hover: 0 8px 24px -6px rgba(15,18,34,0.14);
         }
 
         html, body, [class*="css"], .stApp {
             font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif !important;
-            background-color: var(--bg) !important;
             color: var(--text);
         }
-        h1, h2, h3, h4, h5, h6, p, span, div { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
+        .stApp {
+            background: radial-gradient(1100px 480px at 12% -8%, var(--bg-accent) 0%, var(--bg) 55%) !important;
+            background-attachment: fixed !important;
+        }
+        h1, h2, h3, h4, h5, h6, p, span, div, label { font-family: 'Inter', -apple-system, 'Segoe UI', sans-serif; }
 
         .main .block-container, div[data-testid="stAppViewBlockContainer"] {
-            padding-top: 0.9rem !important;
-            padding-bottom: 2.5rem !important;
-            padding-left: 1.8rem !important;
-            padding-right: 1.8rem !important;
-            max-width: 100% !important;
+            padding-top: 1.1rem !important;
+            padding-bottom: 3rem !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            max-width: 1720px !important;
+            margin: 0 auto !important;
         }
 
         /* ============ SIDEBAR ============ */
         section[data-testid="stSidebar"] { background-color: #FFFFFF; border-right: 1px solid var(--border); }
+        section[data-testid="stSidebar"] .block-container { padding-top: 1.6rem; }
         .sidebar-heading {
             font-size: 11px; font-weight: 700; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 0.07em; margin: 4px 0 10px 0;
+            text-transform: uppercase; letter-spacing: 0.08em; margin: 4px 0 12px 0;
         }
 
-        /* ============ TOP PAGE HEADER (mỏng, không banner) ============ */
+        /* ============ TOP PAGE HEADER ============ */
         .page-header {
             display: flex; align-items: flex-end; justify-content: space-between;
-            padding-bottom: 14px; margin-bottom: 18px;
+            padding-bottom: 16px; margin-bottom: 22px;
             border-bottom: 1px solid var(--border);
         }
-        .page-header .ph-title { font-size: 21px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.02em; }
-        .page-header .ph-subtitle { font-size: 12.5px; color: var(--text-muted); margin: 3px 0 0 0; font-weight: 500; }
+        .page-header .ph-title {
+            font-size: 22px; font-weight: 800; color: var(--text); margin: 0;
+            letter-spacing: -0.02em; display: flex; align-items: center; gap: 10px;
+        }
+        .page-header .ph-subtitle { font-size: 12.5px; color: var(--text-muted); margin: 4px 0 0 0; font-weight: 500; }
         .page-header .ph-meta {
-            font-size: 12px; font-weight: 600; color: var(--primary);
-            background: var(--primary-soft); padding: 6px 14px; border-radius: 999px;
-            white-space: nowrap;
+            font-size: 12px; font-weight: 700; color: var(--primary-dark);
+            background: var(--primary-soft); border: 1px solid #DDE0FF;
+            padding: 7px 15px; border-radius: 999px; white-space: nowrap;
         }
 
-        /* ============ TABS -> UNDERLINE STYLE (Linear/Vercel) ============ */
+        /* ============ TABS -> UNDERLINE STYLE ============ */
         .stTabs [data-baseweb="tab-list"] {
             justify-content: flex-start !important;
-            gap: 28px !important;
+            gap: 30px !important;
             background-color: transparent !important;
             padding: 0px !important;
             border-bottom: 1px solid var(--border) !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 22px !important;
         }
         .stTabs [data-baseweb="tab"] {
             background-color: transparent !important;
             color: var(--text-muted) !important;
             border-radius: 0px !important;
-            padding: 4px 2px 12px 2px !important;
+            padding: 4px 2px 13px 2px !important;
             border: none !important;
             border-bottom: 2.5px solid transparent !important;
             font-weight: 600 !important;
-            font-size: 14px !important;
+            font-size: 14.5px !important;
             font-family: 'Inter', sans-serif !important;
             transition: color 0.15s ease, border-color 0.15s ease;
         }
@@ -114,67 +129,100 @@ st.markdown(
         .stTabs [data-baseweb="tab-highlight"], .stTabs [data-baseweb="tab-border"] { display: none !important; }
 
         /* ============ KPI CARDS ============ */
-        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+        .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 20px; }
         .kpi-card {
             background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-            padding: 16px 18px; box-shadow: var(--shadow); position: relative; overflow: hidden;
-            transition: box-shadow 0.15s ease, transform 0.15s ease;
+            padding: 18px 20px; box-shadow: var(--shadow); position: relative; overflow: hidden;
+            transition: box-shadow 0.18s ease, transform 0.18s ease, border-color 0.18s ease;
         }
-        .kpi-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+        .kpi-card:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); border-color: var(--border-strong); }
         .kpi-card::before {
             content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
             background: var(--accent, var(--primary));
         }
-        .kpi-card .kpi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+        .kpi-card .kpi-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
         .kpi-card .kpi-label {
             font-size: 11.5px; font-weight: 700; color: var(--text-muted);
-            text-transform: uppercase; letter-spacing: 0.04em;
+            text-transform: uppercase; letter-spacing: 0.05em;
         }
         .kpi-card .kpi-icon {
-            width: 28px; height: 28px; border-radius: 9px; display: flex; align-items: center;
-            justify-content: center; font-size: 13px; background: var(--accent-soft, var(--primary-soft));
+            width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 14px; background: var(--accent-soft, var(--primary-soft));
         }
-        .kpi-card .kpi-value { font-size: 25px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
-        .kpi-card .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 5px; font-weight: 500; }
+        .kpi-card .kpi-value { font-size: 27px; font-weight: 800; color: var(--text); line-height: 1.15; letter-spacing: -0.02em; }
+        .kpi-card .kpi-sub { font-size: 11.5px; color: var(--text-muted); margin-top: 6px; font-weight: 500; }
 
-        /* ============ CHART CARDS (tiêu đề HTML thay vì vẽ trong Plotly) ============ */
+        /* ============ CHART CARDS ============ */
         .chart-card {
             background-color: var(--surface); border-radius: var(--radius); border: 1px solid var(--border);
-            padding: 16px 18px 8px 18px; box-shadow: var(--shadow); margin-bottom: 16px;
+            padding: 18px 20px 8px 20px; box-shadow: var(--shadow); margin-bottom: 18px;
+            transition: box-shadow 0.18s ease;
         }
-        .chart-card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 4px; }
-        .chart-card-title { font-size: 13.5px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
-        .chart-card-caption { font-size: 11.5px; color: var(--text-muted); font-weight: 500; }
+        .chart-card:hover { box-shadow: var(--shadow-hover); }
+        .chart-card-header { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 6px; }
+        .chart-card-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: -0.01em; }
+        .chart-card-caption {
+            font-size: 11px; color: var(--text-muted); font-weight: 600;
+            background: var(--bg); padding: 3px 9px; border-radius: 999px;
+        }
 
-        .section-heading { font-size: 15px; font-weight: 700; color: var(--text); margin: 4px 0 12px 2px; }
+        .section-heading { font-size: 15.5px; font-weight: 700; color: var(--text); margin: 6px 0 14px 2px; }
 
         /* ============ BẢNG DỮ LIỆU ============ */
         div[data-testid="stDataFrame"] {
-            border: 1px solid var(--border) !important; border-radius: 12px !important;
-            box-shadow: var(--shadow); overflow: hidden;
+            border: 1px solid var(--border) !important; border-radius: var(--radius-sm) !important;
+            box-shadow: var(--shadow-xs); overflow: hidden;
+        }
+        div[data-testid="stDataFrame"] [data-testid="stDataFrameResizable"] { font-family: 'Inter', sans-serif !important; }
+
+        /* ============ WIDGET LABELS ============ */
+        [data-testid="stWidgetLabel"] p {
+            font-size: 12.5px !important; font-weight: 600 !important; color: var(--text-muted) !important;
+            text-transform: uppercase; letter-spacing: 0.03em;
         }
 
-        /* ============ INPUT / SELECT ============ */
-        div[data-baseweb="select"] > div, .stDateInput input {
-            border-radius: 9px !important; font-family: 'Inter', sans-serif !important;
-            border-color: var(--border) !important;
+        /* ============ INPUT / SELECT / DATE ============ */
+        div[data-baseweb="select"] > div {
+            border-radius: var(--radius-sm) !important; border-color: var(--border) !important;
+            font-family: 'Inter', sans-serif !important; background-color: var(--surface) !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
         }
+        div[data-baseweb="select"] > div:hover { border-color: var(--border-strong) !important; }
+        div[data-baseweb="select"] > div:focus-within {
+            border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-soft) !important;
+        }
+        .stDateInput input {
+            border-radius: var(--radius-sm) !important; font-family: 'Inter', sans-serif !important;
+            border-color: var(--border) !important; background-color: var(--surface) !important;
+        }
+        .stDateInput input:focus {
+            border-color: var(--primary) !important; box-shadow: 0 0 0 3px var(--primary-soft) !important;
+        }
+        div[data-baseweb="popover"] { font-family: 'Inter', sans-serif !important; }
 
         /* ============ BUTTONS ============ */
         .stButton button, .stDownloadButton button {
-            border-radius: 9px !important; font-weight: 600 !important; font-family: 'Inter', sans-serif !important;
-            border: 1px solid var(--border) !important;
+            border-radius: var(--radius-sm) !important; font-weight: 600 !important;
+            font-family: 'Inter', sans-serif !important; border: 1px solid var(--border) !important;
+            transition: transform 0.12s ease, box-shadow 0.12s ease, background-color 0.12s ease;
         }
+        .stButton button:hover, .stDownloadButton button:hover { transform: translateY(-1px); }
         .stButton button[kind="primary"], .stDownloadButton button[kind="primary"] {
             background-color: var(--primary) !important; border: none !important;
-            box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+            box-shadow: 0 3px 10px rgba(79, 70, 229, 0.32) !important;
+        }
+        .stButton button[kind="primary"]:hover, .stDownloadButton button[kind="primary"]:hover {
+            background-color: var(--primary-dark) !important;
+            box-shadow: 0 5px 16px rgba(79, 70, 229, 0.4) !important;
         }
 
-        div[data-testid="stAlert"] { border-radius: 12px !important; }
+        div[data-testid="stAlert"] { border-radius: var(--radius) !important; border: 1px solid var(--border); }
         div[data-testid="stVerticalBlock"] > div { gap: 0.3rem !important; }
 
+        hr { border-color: var(--border) !important; }
+
         ::-webkit-scrollbar { width: 9px; height: 9px; }
-        ::-webkit-scrollbar-thumb { background: #D1D5DB; border-radius: 8px; }
+        ::-webkit-scrollbar-thumb { background: #C9CEDA; border-radius: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
     </style>
 """,
