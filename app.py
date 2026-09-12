@@ -230,9 +230,17 @@ st.markdown(
 )
 
 
+def _html(raw):
+  """Làm phẳng HTML nhiều dòng/có thụt lề về một dòng liền mạch trước khi
+  render, để Streamlit không hiểu nhầm các dòng thụt lề (4+ dấu cách) hoặc
+  dòng trắng bên trong là một khối code Markdown (nguyên nhân khiến thẻ
+  HTML bị in ra dưới dạng chữ thô thay vì hiển thị đúng)."""
+  return "".join(line.strip() for line in raw.strip().splitlines())
+
+
 def render_page_header(title, subtitle, meta_text):
   st.markdown(
-      f"""
+      _html(f"""
       <div class="page-header">
           <div>
               <p class="ph-title">{title}</p>
@@ -240,7 +248,7 @@ def render_page_header(title, subtitle, meta_text):
           </div>
           <div class="ph-meta">📅 {meta_text}</div>
       </div>
-      """,
+      """),
       unsafe_allow_html=True,
   )
 
@@ -259,7 +267,7 @@ def render_kpi_cards(items):
     color_soft = it.get("color_soft", "#EEF0FF")
     sub = it.get("sub", "")
     sub_html = f'<div class="kpi-sub">{sub}</div>' if sub else ""
-    cards_html += f"""
+    cards_html += _html(f"""
         <div class="kpi-card" style="--accent: {color}; --accent-soft: {color_soft};">
             <div class="kpi-head">
                 <span class="kpi-label">{it['label']}</span>
@@ -268,18 +276,18 @@ def render_kpi_cards(items):
             <div class="kpi-value">{it['value']}</div>
             {sub_html}
         </div>
-    """
+    """)
   st.markdown(f'<div class="kpi-row">{cards_html}</div>', unsafe_allow_html=True)
 
 
 def chart_card_open(title, caption=""):
   cap_html = f'<span class="chart-card-caption">{caption}</span>' if caption else ""
   st.markdown(
-      f"""<div class="chart-card">
+      _html(f"""<div class="chart-card">
           <div class="chart-card-header">
               <span class="chart-card-title">{title}</span>
               {cap_html}
-          </div>""",
+          </div>"""),
       unsafe_allow_html=True,
   )
 
